@@ -108,8 +108,18 @@
         body: JSON.stringify({ code }),
       }).then(r => r.json());
       if (res.code === 0 && res.data.valid) {
-        // 成功：进入测试流程（生产环境可将 /test.html 替换为真实相遇测试入口）
-        window.location.href = '/test.html';
+        // 成功：进入测试流程
+        // 线上跳真实相遇测试 H5；本地调试仍走占位桩 /test.html，方便不依赖线上环境
+        const params = new URLSearchParams();
+        params.set('code', code);
+        if (res.data.inviter_name) params.set('inviter', res.data.inviter_name);
+        const qs = params.toString();
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+          window.location.href = '/test.html';
+        } else {
+          // 生产环境真实测试入口：https://www.couplegametest.link/
+          window.location.href = 'https://www.couplegametest.link/' + (qs ? '?' + qs : '');
+        }
       } else if (res.code === 1002) {
         toast('该兑换码已被使用');
       } else if (res.code === 1003) {

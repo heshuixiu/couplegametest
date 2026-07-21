@@ -7,7 +7,7 @@
 - **管理端**：密码登录、统计（总/已用/未用）、批量生成兑换码（≤500/次）、码表查看、复制/导出 TXT
 - **H5 用户端**：兑换码输入 → 实时校验（原子核销）→ 进入测试流程
 - **后端 API**：生成 / 统计 / 导出 / 列表 / 核销，含错误码 `1001/1002/1003`
-- **测试流程接入点** `test.html`：占位桩，标注了接入真实「相遇测试」的位置
+- **真实测试流程**：`index.html` 校验成功后跳 `https://www.couplegametest.link/`（带 `code`/`inviter` 参数）；本地 `localhost` 走占位桩 `test.html`
 
 ## 环境要求
 
@@ -88,13 +88,15 @@ node src/server.js
 
 ## 接入真实「相遇测试」流程
 
-`public/index.html` 校验成功后跳转 `/test.html`（占位桩）。
-生产环境二选一：
+校验成功后跳转逻辑（`public/index.html` → `submitCode()`）：
 
-1. 将 `window.location.href = '/test.html'` 改为真实相遇测试入口（如 `lingxi-web` 的 B1 页）；
-2. 或直接用真实 H5 替换 `public/test.html`。
+- **线上环境**：跳转到真实相遇测试 H5 —— `https://www.couplegametest.link/`，并带参数 `?code=XY-XXXX-XXXX&inviter=<邀请人>`（`inviter` 仅在管理端生成码时填写才带上，便于来源追踪）。
+- **本地调试**（`localhost` / `127.0.0.1`）：仍走占位桩 `/test.html`，方便不依赖线上环境即可点穿全流程。
+- 切换只需改 `submitCode()` 里的目标地址常量，无需动其它逻辑。
 
-`test.html` 已预留：B1 背景题进度条（B1 起显示）、结果页底部合规声明。
+`test.html` 仅作本地调试占位桩：预留了 B1 背景题进度条（B1 起显示）、结果页底部合规声明。若真实 H5 不需要本地桩，可删除该文件。
+
+> 注意：真实测试 H5 与本项目部署目标根域名相同（`couplegametest.link`）。若把本 app 也绑到 `couplegametest.link` 根域，会与真实 H5 冲突——建议本 app 部署在**子域**（如 `redeem.couplegametest.link`）或**子路径**（如 `couplegametest.link/redeem/`），详见下方「部署到公网」。
 
 ## 上线 Checklist 对照
 
@@ -132,7 +134,7 @@ node src/server.js
 
 ### Render
 
-1. Render 控制台 → **New** → **Blueprint** → 连接 `heshuixiu/couplegestest`
+1. Render 控制台 → **New** → **Blueprint** → 连接 `heshuixiu/couplegametest`
 2. Render 读取 `render.yaml`，自动建 web 服务（rootDir `redeem`、挂载 `/data` 磁盘）
 3. 在 service 的 **Environment** 里补 `ADMIN_TOKEN`（强密码）；`DEMO_CODE` 已是空
 4. Deploy → **Settings → Custom Domain** 填 `couplegametest.link`（加 CNAME 记录）
