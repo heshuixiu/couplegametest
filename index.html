@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Shot Challenge — Memory & Reflex Basketball Game</title>
+<meta name="description" content="A free online basketball shooting game that trains your memory and reflexes. 3 difficulty levels, combo scoring, leaderboard. Play in your browser — no download needed.">
+<meta name="theme-color" content="#0d1117">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117; --bg2:#131923; --bg3:#1a2332;
+  --orange:#ff6b35; --orange2:#ff8c42; --gold:#ffd23f; --green:#4ecca3;
+  --text:#e5e7eb; --muted:#6b7280; --border:rgba(255,255,255,.08);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg); color:var(--text);
+  line-height:1.6; overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+
+/* ===== Nav ===== */
+.nav{
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 28px;
+  background:rgba(13,17,23,.82); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  transition:padding .25s;
+}
+.nav.scrolled{padding:10px 28px}
+.nav-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;letter-spacing:1px}
+.nav-logo .ball{font-size:22px;animation:bounce 1.8s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-5px) rotate(180deg)}}
+.nav-links{display:flex;gap:28px;font-size:14px}
+.nav-links a{color:var(--muted);transition:color .2s}
+.nav-links a:hover{color:var(--orange2)}
+.nav-play{
+  padding:9px 24px; border:none; border-radius:50px; cursor:pointer;
+  background:linear-gradient(135deg,var(--orange),var(--orange2));
+  color:#fff; font-size:14px; font-weight:700; letter-spacing:.5px;
+  box-shadow:0 4px 18px rgba(255,107,53,.4); transition:transform .15s,box-shadow .15s;
+}
+.nav-play:hover{box-shadow:0 6px 24px rgba(255,107,53,.6)}
+.nav-play:active{transform:scale(.95)}
+
+/* ===== Hero ===== */
+.hero{
+  min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:100px 20px 60px; position:relative; overflow:hidden;
+  background:radial-gradient(ellipse at 50% 35%,var(--bg3) 0%,var(--bg) 70%);
+}
+.hero::before{
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(circle at 20% 80%,rgba(255,107,53,.06) 0%,transparent 50%),
+    radial-gradient(circle at 80% 20%,rgba(78,204,163,.05) 0%,transparent 50%);
+  pointer-events:none;
+}
+.hero-ball{font-size:64px;animation:bounce 1.8s ease-in-out infinite;margin-bottom:12px;filter:drop-shadow(0 8px 28px rgba(255,107,53,.45))}
+.hero h1{
+  font-size:clamp(36px,8vw,68px); font-weight:900; letter-spacing:3px; line-height:1.1;
+  background:linear-gradient(135deg,var(--orange2),var(--orange),var(--gold));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  margin-bottom:10px;
+}
+.hero .tagline{font-size:clamp(15px,3.5vw,20px); color:var(--muted); max-width:560px; margin:0 auto 32px; letter-spacing:.5px}
+.hero-cta{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.btn-primary{
+  padding:16px 44px; border:none; border-radius:50px; cursor:pointer;
+  background:linear-gradient(135deg,var(--orange),var(--orange2)); color:#fff;
+  font-size:18px; font-weight:700; letter-spacing:1px;
+  box-shadow:0 8px 28px rgba(255,107,53,.45); transition:transform .15s,box-shadow .15s;
+}
+.btn-primary:hover{box-shadow:0 10px 36px rgba(255,107,53,.6)}
+.btn-primary:active{transform:scale(.95)}
+.btn-ghost{
+  padding:16px 36px; border:2px solid var(--border); border-radius:50px; cursor:pointer;
+  background:rgba(255,255,255,.03); color:var(--text); font-size:16px; font-weight:600;
+  transition:all .2s;
+}
+.btn-ghost:hover{border-color:var(--orange);color:var(--orange2)}
+
+/* floating stats */
+.hero-stats{
+  display:flex; gap:40px; margin-top:56px; flex-wrap:wrap; justify-content:center;
+}
+.hero-stat{text-align:center}
+.hero-stat .num{
+  font-size:32px; font-weight:900;
+  background:linear-gradient(135deg,var(--gold),var(--orange2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.hero-stat .lbl{font-size:12px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-top:2px}
+
+/* ===== Game Section (iframe) ===== */
+.game-section{padding:60px 20px 80px;max-width:1100px;margin:0 auto}
+.section-title{
+  text-align:center; font-size:clamp(24px,5vw,36px); font-weight:800; margin-bottom:8px;
+  background:linear-gradient(135deg,var(--orange2),var(--gold));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.section-sub{text-align:center;color:var(--muted);font-size:15px;margin-bottom:36px}
+.game-frame-wrap{
+  position:relative; width:100%; max-width:480px; margin:0 auto;
+  aspect-ratio:9/16; border-radius:20px; overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px var(--border);
+  background:var(--bg);
+}
+.game-frame-wrap iframe{width:100%;height:100%;border:none;display:block}
+.game-frame-wrap::after{
+  content:''; position:absolute; inset:-1px; border-radius:20px; pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,107,53,.15),transparent 40%,rgba(78,204,163,.1));
+  z-index:5;
+}
+.frame-hint{text-align:center;font-size:12px;color:var(--muted);margin-top:16px}
+
+/* ===== Features ===== */
+.features{padding:60px 20px;max-width:1000px;margin:0 auto}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;margin-top:40px}
+.feature-card{
+  background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:16px;
+  padding:28px 24px; transition:transform .25s,border-color .25s;
+}
+.feature-card:hover{transform:translateY(-4px);border-color:rgba(255,140,66,.25)}
+.feature-icon{font-size:36px;margin-bottom:14px}
+.feature-card h3{font-size:17px;font-weight:700;margin-bottom:8px;color:var(--orange2)}
+.feature-card p{font-size:14px;color:var(--muted);line-height:1.7}
+
+/* ===== How to Play ===== */
+.howto{padding:60px 20px 80px;max-width:800px;margin:0 auto}
+.steps{display:flex;flex-direction:column;gap:20px;margin-top:36px}
+.step{
+  display:flex; gap:20px; align-items:flex-start;
+  background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:14px; padding:20px 24px;
+}
+.step-num{
+  flex-shrink:0; width:40px; height:40px; border-radius:50%;
+  background:linear-gradient(135deg,var(--orange),var(--orange2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; font-weight:800; color:#fff;
+  box-shadow:0 4px 14px rgba(255,107,53,.3);
+}
+.step h4{font-size:16px;font-weight:700;margin-bottom:4px}
+.step p{font-size:14px;color:var(--muted)}
+
+/* ===== Footer ===== */
+.footer{
+  padding:40px 20px; text-align:center; border-top:1px solid var(--border);
+  background:var(--bg2);
+}
+.footer p{font-size:13px;color:var(--muted);margin-bottom:8px}
+.footer a{color:var(--orange2)}
+
+/* ===== Responsive ===== */
+@media(max-width:640px){
+  .nav{padding:12px 16px}
+  .nav-links{display:none}
+  .nav.scrolled{padding:8px 16px}
+  .hero{padding:90px 16px 40px}
+  .hero-stats{gap:24px;margin-top:40px}
+  .hero-stat .num{font-size:26px}
+  .game-section,.features,.howto{padding:40px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Nav ===== -->
+<nav class="nav" id="nav">
+  <div class="nav-logo">
+    <span class="ball">🏀</span>
+    <span>Shot Challenge</span>
+  </div>
+  <div class="nav-links">
+    <a href="#play">Play</a>
+    <a href="#features">Features</a>
+    <a href="#howto">How to Play</a>
+  </div>
+  <button class="nav-play" onclick="document.getElementById('play').scrollIntoView({behavior:'smooth'})">Play Now</button>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+  <div class="hero-ball">🏀</div>
+  <h1>Shot Challenge</h1>
+  <p class="tagline">A basketball shooting game that trains your memory and reflexes. Aim, shoot, chain combos — beat your high score in 30 seconds.</p>
+  <div class="hero-cta">
+    <button class="btn-primary" onclick="document.getElementById('play').scrollIntoView({behavior:'smooth'})">▶ Play Now</button>
+    <button class="btn-ghost" onclick="document.getElementById('howto').scrollIntoView({behavior:'smooth'})">How to Play</button>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num">3</div><div class="lbl">Difficulty Levels</div></div>
+    <div class="hero-stat"><div class="num">30s</div><div class="lbl">Per Round</div></div>
+    <div class="hero-stat"><div class="num">∞</div><div class="lbl">Combo Streaks</div></div>
+    <div class="hero-stat"><div class="num">2&3</div><div class="lbl">Point Shots</div></div>
+  </div>
+</section>
+
+<!-- ===== Game (iframe) ===== -->
+<section class="game-section" id="play">
+  <h2 class="section-title">Play the Game</h2>
+  <p class="section-sub">Tap or press space to shoot. Drag up to aim. Land combos for bonus points.</p>
+  <div class="game-frame-wrap">
+    <iframe src="game.html" title="Shot Challenge Game" allow="autoplay" loading="lazy"></iframe>
+  </div>
+  <p class="frame-hint">Best experienced in portrait mode on mobile · Press space on desktop</p>
+</section>
+
+<!-- ===== Features ===== -->
+<section class="features" id="features">
+  <h2 class="section-title">Why You'll Love It</h2>
+  <p class="section-sub">Simple to learn, hard to master — built for quick sessions and long streaks.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>Aim & Shoot</h3>
+      <p>Drag up from the shoot button to aim your shot in any forward direction. Predict where the hoop will be — that's the memory challenge.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>3 Difficulty Levels</h3>
+      <p>Easy, Hard, and Super Hard. The hoop moves faster as you climb — same hoop size, pure speed test. Which level can you master?</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔥</div>
+      <h3>Combo Streaks</h3>
+      <p>Score 2-pointers and 3-pointers. Chain consecutive hits for escalating bonuses: 2 combo +2, 3 combo +3, 4 combo +4... how high can you go?</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏆</div>
+      <h3>Leaderboard</h3>
+      <p>Every round saves to a local leaderboard per difficulty. Beat your own record, or challenge a friend on the same device.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <h3>Play Anywhere</h3>
+      <p>Works on phone, tablet, and desktop. No download, no signup — just open and play. Touch or keyboard, your choice.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <h3>Memory Training</h3>
+      <p>The ball takes ~0.6 seconds to reach the hoop. You must predict where the moving hoop will be — training spatial memory and reaction time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== How to Play ===== -->
+<section class="howto" id="howto">
+  <h2 class="section-title">How to Play</h2>
+  <p class="section-sub">Master the basics in 30 seconds.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <h4>Pick Your Difficulty</h4>
+        <p>Choose Easy, Hard, or Super Hard. The only difference is hoop speed — Easy is relaxed, Super Hard is lightning fast.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <h4>Shoot the Ball</h4>
+        <p>Tap the round shoot button (or press space) to launch a shot. The ball auto-tracks the hoop's current position.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <h4>Aim for Precision</h4>
+        <p>Want to predict the hoop's future position? Press and drag upward from the shoot button to aim left or right. Release to shoot in that direction.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div>
+        <h4>Chain Combos</h4>
+        <p>Hit consecutive shots to build a combo streak. Each combo level adds bonus points — 2-combo +2, 3-combo +3, and so on. Miss and the streak resets.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div>
+        <h4>Beat the Clock</h4>
+        <p>You have 30 seconds. Score as much as you can. When time's up, see your stats and check the leaderboard. Then play again.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  <p>🏀 Shot Challenge — A free memory & reflex basketball game</p>
+  <p>Play in your browser · No download · Works on mobile & desktop</p>
+  <p style="margin-top:12px"><a href="https://github.com/heshuixiu/couplegametest" target="_blank">View on GitHub</a></p>
+</footer>
+
+<script>
+// Nav shrink on scroll
+var nav=document.getElementById('nav');
+window.addEventListener('scroll',function(){
+  if(window.scrollY>30) nav.classList.add('scrolled');
+  else nav.classList.remove('scrolled');
+});
+</script>
+
+</body>
+</html>
