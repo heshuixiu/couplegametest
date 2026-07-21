@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>兑换码管理面板</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f5f5; color: #222; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 20px; margin: 0 0 16px; }
+  .card { background: #fff; border: 1px solid #e3e3e3; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  input, button { font-size: 14px; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; }
+  input { flex: 1; min-width: 120px; }
+  button { background: #2b6cff; color: #fff; border: none; cursor: pointer; }
+  button:hover { background: #1f57d6; }
+  button.ghost { background: #eee; color: #333; }
+  .stats { display: flex; gap: 24px; font-size: 15px; }
+  .stats b { font-size: 22px; display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+  .tag.unused { background: #e8f5e9; color: #2e7d32; }
+  .tag.used { background: #fdecea; color: #c62828; }
+  .muted { color: #888; font-size: 12px; }
+  #panel { display: none; }
+  .msg { margin-top: 8px; font-size: 13px; }
+  .msg.err { color: #c62828; }
+  .msg.ok { color: #2e7d32; }
+  textarea { width: 100%; height: 120px; font-family: monospace; font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔐 兑换码管理面板</h1>
+
+  <!-- 登录 -->
+  <div class="card" id="loginCard">
+    <div class="row">
+      <input id="token" type="password" placeholder="管理员密码" />
+      <button onclick="doLogin()">登录</button>
+    </div>
+    <div class="msg err" id="loginMsg"></div>
+  </div>
+
+  <!-- 登录后 -->
+  <div id="panel">
+    <!-- 统计 -->
+    <div class="card">
+      <div class="stats">
+        <div>总码数<b id="stTotal">-</b></div>
+        <div>已用<b id="stUsed">-</b></div>
+        <div>未用<b id="stUnused">-</b></div>
+      </div>
+    </div>
+
+    <!-- 生成 -->
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:8px;">✨ 生成新码</div>
+      <div class="row">
+        <input id="genCount" type="number" min="1" max="500" value="50" style="max-width:120px;flex:none;" />
+        <input id="genBatch" type="text" placeholder="批次名称（可选）" />
+        <input id="genInviter" type="text" placeholder="管理者名称（可选）" />
+        <button onclick="doGenerate()">生成</button>
+      </div>
+      <div class="msg" id="genMsg"></div>
+    </div>
+
+    <!-- 码表 -->
+    <div class="card">
+      <div class="row" style="justify-content:space-between;">
+        <div style="font-weight:600;">📋 码表</div>
+        <div class="row">
+          <button class="ghost" onclick="copyAll()">复制全部</button>
+          <button class="ghost" onclick="exportTxt()">导出 TXT</button>
+        </div>
+      </div>
+      <div id="tableBox" style="margin-top:10px;max-height:360px;overflow:auto;">
+        <table>
+          <thead><tr><th>兑换码</th><th>状态</th><th>创建时间</th><th>使用时间</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let TOKEN = '';
+
+// 必须通过服务地址访问，直接双击打开（file://）时 fetch 会失败且无提示
+if (location.protocol === 'file:') {
+  const m = document.getElementById('loginMsg');
+  m.textContent = '⚠️ 请通过服务地址访问：http://localhost:3000/admin ，不要直接双击打开本文件';
+  m.className = 'msg err';
+}
+
+function api(path, opts) {
+  return fetch(path, opts).then(r => r.json());
+}
+
+async function doLogin() {
+  const t = document.getElementById('token').value.trim();
+  if (!t) { setMsg('loginMsg', '请输入密码', true); return; }
+  try {
+    const s = await api('/api/admin/stats?admin_token=' + encodeURIComponent(t));
+    if (s.code !== 0) { setMsg('loginMsg', s.msg, true); return; }
+    TOKEN = t;
+    document.getElementById('loginCard').style.display = 'none';
+    document.getElementById('panel').style.display = 'block';
+    await refresh();
+  } catch (e) {
+    setMsg('loginMsg', '网络请求失败：请确认通过 http:// 地址访问（不要直接双击 html 文件）', true);
+  }
+}
+
+function setMsg(id, text, err) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg ' + (err ? 'err' : 'ok');
+}
+
+async function refresh() {
+  const s = await api('/api/admin/stats?admin_token=' + encodeURIComponent(TOKEN));
+  if (s.code === 0) {
+    document.getElementById('stTotal').textContent = s.data.total;
+    document.getElementById('stUsed').textContent = s.data.used;
+    document.getElementById('stUnused').textContent = s.data.unused;
+  }
+  const l = await api('/api/admin/list?admin_token=' + encodeURIComponent(TOKEN));
+  if (l.code === 0) {
+    const tb = document.getElementById('tbody');
+    tb.innerHTML = l.data.map(r => `
+      <tr>
+        <td>${r.code}</td>
+        <td><span class="tag ${r.status === 1 ? 'used' : 'unused'}">${r.status === 1 ? '已使用' : '未使用'}</span></td>
+        <td class="muted">${r.created_at || ''}</td>
+        <td class="muted">${r.used_at || '-'}</td>
+      </tr>`).join('');
+  }
+}
+
+async function doGenerate() {
+  const count = parseInt(document.getElementById('genCount').value, 10) || 0;
+  const batch = document.getElementById('genBatch').value.trim();
+  const inviter = document.getElementById('genInviter').value.trim();
+  if (count < 1 || count > 500) { setMsg('genMsg', '数量需在 1-500 之间', true); return; }
+  try {
+    const res = await api('/api/admin/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_token: TOKEN, count, batch_name: batch, inviter_name: inviter }),
+    });
+    if (res.code === 0) {
+      setMsg('genMsg', `已生成 ${res.data.total} 个码`, false);
+      await refresh();
+    } else {
+      setMsg('genMsg', res.msg, true);
+    }
+  } catch (e) {
+    setMsg('genMsg', '网络请求失败，请确认通过 http:// 地址访问', true);
+  }
+}
+
+function copyAll() {
+  const rows = [...document.querySelectorAll('#tbody tr td:first-child')].map(td => td.textContent);
+  navigator.clipboard.writeText(rows.join('\n')).then(() => {
+    setMsg('genMsg', `已复制 ${rows.length} 个码到剪贴板`, false);
+  });
+}
+
+function exportTxt() {
+  window.location.href = '/api/admin/export?admin_token=' + encodeURIComponent(TOKEN);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>相遇坐标 · 兑换码</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(160deg, #1b2a4a 0%, #2b6cff 100%);
+    color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 100%; max-width: 380px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18); border-radius: 18px;
+    padding: 32px 24px; text-align: center; backdrop-filter: blur(6px);
+  }
+  h1 { font-size: 21px; margin: 0 0 8px; line-height: 1.4; }
+  .sub { font-size: 13px; opacity: 0.75; margin-bottom: 28px; }
+  input {
+    width: 100%; text-align: center; letter-spacing: 2px; font-size: 20px; font-weight: 700;
+    padding: 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.95); color: #1b2a4a; outline: none; text-transform: uppercase;
+  }
+  input:focus { border-color: #ffd54f; }
+  button.go {
+    width: 100%; margin-top: 18px; padding: 15px; font-size: 17px; font-weight: 700;
+    border: none; border-radius: 12px; background: #ffd54f; color: #1b2a4a; cursor: pointer;
+    transition: opacity .2s, transform .1s;
+  }
+  button.go:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.go:not(:disabled):active { transform: scale(0.98); }
+  .hint { margin-top: 14px; font-size: 12px; opacity: 0.6; }
+
+  /* Toast */
+  #toast {
+    position: fixed; left: 50%; top: 30%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.82); color: #fff; padding: 12px 22px; border-radius: 10px;
+    font-size: 15px; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 50;
+  }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+  <!-- 入口卡（首屏直接进入，无年龄确认弹窗） -->
+  <div class="card" id="mainCard">
+    <h1>请输入你的<br/>相遇坐标兑换码</h1>
+    <div class="sub">联系活动主办方获取</div>
+    <input id="code" type="text" inputmode="text" autocomplete="off"
+           placeholder="XY-XXXX-XXXX" maxlength="20" />
+    <button class="go" id="goBtn" disabled onclick="submitCode()">进入测试</button>
+    <div class="hint">输入完成后点击键盘「确认」即可校验</div>
+    <div class="hint" style="margin-top:6px;opacity:0.5;">本地测试可直接输入演示码 <b>DEMO2026</b> 放行</div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+  // 必须通过服务地址访问：直接双击打开（file://）时 /api 请求会失败，按钮点了没反应
+  if (location.protocol === 'file:') {
+    document.body.innerHTML = '<div style="color:#fff;text-align:center;padding:48px 24px;font-size:17px;line-height:2;">⚠️ 请通过服务地址访问<br/><b style="font-size:20px;">http://localhost:3000/</b><br/><span style="font-size:13px;opacity:.85;">不要直接双击打开 html 文件，否则兑换码无法校验、「进入测试」点了没反应</span></div>';
+    throw new Error('open via http://');
+  }
+
+  // 首屏直接聚焦输入框
+  document.getElementById('code').focus();
+
+  // ---- 输入处理 ----
+  const input = document.getElementById('code');
+  const goBtn = document.getElementById('goBtn');
+  input.addEventListener('input', () => {
+    input.value = input.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20);
+    goBtn.disabled = input.value.trim().length === 0;
+  });
+  // 键盘「确认」直接触发校验
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === 'Done' || e.key === 'Go') {
+      e.preventDefault();
+      if (!goBtn.disabled) submitCode();
+    }
+  });
+
+  // ---- Toast ----
+  let toastTimer = null;
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 1500);
+  }
+
+  // ---- 提交校验 ----
+  let loading = false;
+  async function submitCode() {
+    if (loading) return;
+    const code = input.value.trim();
+    if (!code) { toast('请输入兑换码'); return; }
+    loading = true;
+    goBtn.disabled = true;
+    try {
+      const res = await fetch('/api/code/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      }).then(r => r.json());
+      if (res.code === 0 && res.data.valid) {
+        // 成功：进入测试流程（生产环境可将 /test.html 替换为真实相遇测试入口）
+        window.location.href = '/test.html';
+      } else if (res.code === 1002) {
+        toast('该兑换码已被使用');
+      } else if (res.code === 1003) {
+        toast('该兑换码已过期');
+      } else {
+        toast('无效兑换码');
+        input.value = '';
+        goBtn.disabled = true;
+      }
+    } catch (e) {
+      toast('网络异常，请重试');
+    } finally {
+      loading = false;
+      if (goBtn) goBtn.disabled = input.value.trim().length === 0;
+    }
+  }
+</script>
+</body>
+</html>

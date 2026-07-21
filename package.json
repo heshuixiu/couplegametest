@@ -1,0 +1,14 @@
+{
+  "name": "lingxi-redeem",
+  "version": "1.0.0",
+  "description": "相遇测试 · 兑换码系统（方案A 轻量级，零依赖）",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

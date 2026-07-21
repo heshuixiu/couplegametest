@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>相遇测试 · B1 背景题</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f6; color: #222; }
+  .bar { position: sticky; top: 0; height: 6px; background: #e3e3e3; }
+  .bar > i { display: block; height: 100%; width: 0; background: #2b6cff; transition: width .3s; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 28px 20px 60px; }
+  .step { font-size: 13px; color: #888; margin-bottom: 6px; }
+  h2 { font-size: 19px; margin: 0 0 20px; line-height: 1.4; }
+  .opt { display: block; width: 100%; text-align: left; padding: 16px; margin-bottom: 12px; border: 2px solid #e3e3e3; border-radius: 12px; background: #fff; font-size: 15px; cursor: pointer; }
+  .opt.sel { border-color: #2b6cff; background: #eef3ff; }
+  .next { margin-top: 16px; width: 100%; padding: 15px; font-size: 16px; font-weight: 700; border: none; border-radius: 12px; background: #2b6cff; color: #fff; }
+  .next:disabled { opacity: .4; }
+  /* 结果页 */
+  #result { display: none; text-align: center; }
+  #result .score { font-size: 48px; font-weight: 800; color: #2b6cff; margin: 10px 0; }
+  .comply { margin-top: 28px; padding: 14px; background: #fff; border-radius: 10px; font-size: 12px; color: #888; line-height: 1.7; text-align: left; }
+  .stub { margin: 12px 0 20px; font-size: 12px; color: #c0621a; background: #fff5e6; border: 1px solid #ffd9a8; padding: 8px 12px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<div class="bar"><i id="prog"></i></div>
+<div class="wrap">
+  <div id="quiz">
+    <div class="step" id="stepLabel">B1 背景题 · 1 / 2</div>
+    <h2 id="qTitle">示例题：你更看重伴侣的哪一点？</h2>
+    <div id="opts"></div>
+    <button class="next" id="nextBtn" disabled onclick="next()">下一步</button>
+  </div>
+
+  <div id="result">
+    <div class="stub">⚠️ 此为「原有相遇测试流程」接入点（占位桩）。生产环境请将本页替换为 lingxi-web 真实的 B1 背景题（Q1~Q15）与结果页逻辑。</div>
+    <div class="step">测试完成</div>
+    <div class="score" id="score">A</div>
+    <h2>你的相遇坐标已生成</h2>
+    <p style="color:#666;font-size:14px;">感谢参与，以下是基于你的作答生成的初步画像。</p>
+    <div class="comply">
+      <b>合规声明</b><br/>
+      本测试结果为娱乐性质的心理投射参考，不构成任何专业心理、医疗或法律建议。我们不会收集你的真实姓名、联系方式等个人敏感信息；测试数据仅用于生成匿名画像，你可随时关闭页面放弃结果。如你对内容有异议，请联系活动主办方。
+    </div>
+  </div>
+</div>
+
+<script>
+  // 占位用的示例题（2 题），用于演示「兑换码 → B1 背景题 → 结果页」全流程
+  const QUESTIONS = [
+    { q: '示例题：你更看重伴侣的哪一点？', opts: ['情绪稳定', '共同爱好', '上进心', '外形气质'] },
+    { q: '示例题：空闲时间你更想？', opts: ['独自充电', '朋友聚会', '双人旅行', '学习新技能'] },
+  ];
+  let idx = 0, answers = [];
+
+  function render() {
+    document.getElementById('stepLabel').textContent = `B1 背景题 · ${idx + 1} / ${QUESTIONS.length}`;
+    document.getElementById('qTitle').textContent = QUESTIONS[idx].q;
+    document.getElementById('prog').style.width = ((idx) / QUESTIONS.length * 100) + '%';
+    document.getElementById('opts').innerHTML = QUESTIONS[idx].opts.map((o, i) =>
+      `<button class="opt" onclick="pick(${i})">${o}</button>`).join('');
+    document.getElementById('nextBtn').disabled = true;
+    document.getElementById('nextBtn').textContent = idx === QUESTIONS.length - 1 ? '查看结果' : '下一步';
+  }
+  function pick(i) {
+    [...document.querySelectorAll('.opt')].forEach((b, j) => b.classList.toggle('sel', j === i));
+    answers[idx] = i;
+    document.getElementById('nextBtn').disabled = false;
+  }
+  function next() {
+    if (answers[idx] === undefined) return;
+    if (idx < QUESTIONS.length - 1) { idx++; render(); }
+    else finish();
+  }
+  function finish() {
+    document.getElementById('prog').style.width = '100%';
+    document.getElementById('quiz').style.display = 'none';
+    document.getElementById('result').style.display = 'block';
+    // 示例：根据作答生成占位结果
+    const labels = ['理性型', '探索型', '浪漫型', '成长型'];
+    document.getElementById('score').textContent = labels[answers[0] ?? 0];
+  }
+  render();
+</script>
+</body>
+</html>
