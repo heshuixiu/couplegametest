@@ -1,4 +1,4 @@
-.workbuddy/
-.DS_Store
-Thumbs.db
 node_modules/
+.npm-cache/
+dist/
+_check.html
