@@ -23,6 +23,13 @@ const tests = [
     desc: '矛盾之后你们能多快和好？看看这段感情的韧性有多强。',
     tag: '新',
   },
+  {
+    icon: '🎁',
+    title: '专属测评兑换',
+    desc: '输入兑换码，解锁你们的专属测评与隐藏彩蛋。',
+    tag: '福利',
+    href: 'https://redeem.couplegametest.link',
+  },
 ]
 
 export default function TestZone() {
@@ -35,7 +42,7 @@ export default function TestZone() {
       </div>
       <div className="cards">
         {tests.map((t) => (
-          <a className="card" href="#tests" key={t.title}>
+          <a className="card" href={t.href || '#tests'} key={t.title}>
             {t.tag && <span className="card__tag">{t.tag}</span>}
             <span className="card__icon" aria-hidden="true">{t.icon}</span>
             <h3 className="card__title">{t.title}</h3>
