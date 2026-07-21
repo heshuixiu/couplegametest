@@ -179,6 +179,11 @@ async function handleApi(req, res, url) {
     return sendJSON(res, 200, { code: 1001, msg: '无效的兑换码' });
   }
 
+  // ---- 公开健康检查（供 Railway/Render healthcheck，无需鉴权）----
+  if (p === '/api/health' && req.method === 'GET') {
+    return sendJSON(res, 200, { code: 0, ok: true, ts: Date.now() });
+  }
+
   return sendJSON(res, 404, { code: 404, msg: '接口不存在' });
 }
 

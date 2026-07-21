@@ -11,7 +11,7 @@ services:
     plan: free
     buildCommand: "echo no-build"          # 零依赖，无需安装/构建
     startCommand: "node --experimental-sqlite src/server.js"
-    healthCheckPath: "/api/admin/stats"
+    healthCheckPath: "/api/health"
     envVars:
       - key: NODE_VERSION
         value: "22"                         # node:sqlite 所需 Node 版本
