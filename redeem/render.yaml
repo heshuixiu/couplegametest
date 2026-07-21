@@ -1,0 +1,29 @@
+# Render 部署配置 —— 兑换码系统（位于仓库的 redeem/ 子目录）
+# 用法：Render 控制台 -> New -> Blueprint -> 连接 GitHub 仓库 couplegametest
+#       Render 读取本文件，按 rootDir 定位到 redeem/ 子目录启动
+# Render 会自动注入 PORT 环境变量，服务已支持 process.env.PORT
+
+services:
+  - type: web
+    name: couplegametest-redeem
+    runtime: node
+    rootDir: redeem
+    plan: free
+    buildCommand: "echo no-build"          # 零依赖，无需安装/构建
+    startCommand: "node --experimental-sqlite src/server.js"
+    healthCheckPath: "/api/admin/stats"
+    envVars:
+      - key: NODE_VERSION
+        value: "22"                         # node:sqlite 所需 Node 版本
+      - key: ADMIN_TOKEN
+        sync: false                          # 在 Render 控制台手动设为强密码（不入库）
+      - key: DEMO_CODE
+        value: ""                            # 关闭演示码放行（生产必须）
+      - key: DB_PATH
+        value: "/data/exchange_codes.db"     # 指向持久磁盘
+    # 持久磁盘：防止重启/重部署丢失兑换码数据
+    # 注意：Render free 计划文件系统默认 ephemeral，需挂载 disk 才持久
+    disks:
+      - name: redeem-data
+        mountPath: /data
+        sizeGB: 1

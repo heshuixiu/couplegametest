@@ -108,6 +108,46 @@ node src/server.js
 - [x] 结果页底部合规声明（见 `test.html`）
 - [~] H5 入口年龄确认弹窗：按产品决策**已移除**，首屏直接进入兑换码输入（如合规需要可恢复）
 
+## 部署到公网（Railway / Render）
+
+本应用是 **Node 服务端程序**（需常驻进程 + SQLite），不能用 GitHub Pages / 静态托管。
+仓库已附带两套部署配置：`railway.toml`、`render.yaml`，均按 `redeem/` 子目录定位。
+
+### 生产前置（重要）
+
+| 项 | 设置 | 原因 |
+|----|------|------|
+| `ADMIN_TOKEN` | 强密码（如 `Xy#7kP9qRedeem2026`）| 默认 `XiangYu2026Admin` 已公开，必须改 |
+| `DEMO_CODE` | 空字符串 `""` | 关闭 `DEMO2026` 演示码放行，否则任何人可白嫖测试 |
+| `DB_PATH` | 挂载卷路径（如 `/data/exchange_codes.db`）| **必须挂持久卷**，否则重启/重部署清空数据库 |
+| `NODE_VERSION` | `22` | `node:sqlite` 所需（启动已带 `--experimental-sqlite` 标志）|
+
+### Railway（推荐，最简单）
+
+1. Railway 控制台 → **New Project** → 选 **Deploy from GitHub repo** → `heshuixiu/couplegametest`
+2. 项目 Settings → **Root Directory** 设为 `redeem`
+3. **Variables** 添加：`ADMIN_TOKEN`（强密码）、`DEMO_CODE`（空）
+4. **Volumes** 添加挂载：`/data`（服务会自动把 `DB_PATH` 指向此处）
+5. Deploy → 完成后在 Settings 绑定自定义域名 `couplegametest.link`（加 CNAME 记录）
+
+### Render
+
+1. Render 控制台 → **New** → **Blueprint** → 连接 `heshuixiu/couplegestest`
+2. Render 读取 `render.yaml`，自动建 web 服务（rootDir `redeem`、挂载 `/data` 磁盘）
+3. 在 service 的 **Environment** 里补 `ADMIN_TOKEN`（强密码）；`DEMO_CODE` 已是空
+4. Deploy → **Settings → Custom Domain** 填 `couplegametest.link`（加 CNAME 记录）
+
+### 绑定域名 couplegametest.link
+
+部署完成后，在平台控制台添加自定义域名，把 `couplegametest.link` 的 **CNAME** 指向平台提供的地址（Railway 给 `*.up.railway.app` 子域，Render 给 `*.onrender.com` 子域）。
+DNS 生效后再在控制台点 "Verify" 即可。若希望打开首页直接是兑换码产品，把站点根指向 `redeem/public/`；保留旧站则加一个入口链接即可。
+
+### ⚠️ 持久化提醒
+
+Railway / Render 的**容器文件系统默认是临时的**，每次重部署或重启都会重置。
+**必须挂载持久卷（Railway Volumes / Render Disks）到 `/data`**，并通过 `DB_PATH=/data/exchange_codes.db` 让 SQLite 写在卷内，兑换码数据才不会丢。
+未挂卷仅适合临时演示，切勿用于正式发放兑换码。
+
 ## 安全与风控（轻量级，与文档一致）
 
 | 风险 | 对策 |

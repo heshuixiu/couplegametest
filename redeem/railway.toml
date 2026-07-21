@@ -1,0 +1,30 @@
+# Railway 部署配置 —— 兑换码系统（位于仓库的 redeem/ 子目录）
+# 用法：Railway 控制台新建 Project -> 关联 GitHub 仓库 couplegametest
+#       -> Settings 把 Root Directory 设为 redeem -> Deploy（自动读取本文件）
+# Railway 会注入 PORT 环境变量，服务已支持 process.env.PORT
+
+[build]
+builder = "nixpacks"
+# 零依赖应用，无需构建
+buildCommand = "echo 'no build step'"
+
+[deploy]
+startCommand = "node --experimental-sqlite src/server.js"
+healthcheckPath = "/api/admin/stats"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+[variables]
+NODE_VERSION = "22"
+# 数据库落在持久卷内（见下方 mounts），确保重启/重部署不丢兑换码
+DB_PATH = "/data/exchange_codes.db"
+# ADMIN_TOKEN 与 DEMO_CODE 请在 Railway 控制台手动设置（见 README 部署章节）
+#   ADMIN_TOKEN = 你的强密码（覆盖默认 XiangYu2026Admin）
+#   DEMO_CODE   = ""（空字符串，关闭演示码放行）
+
+# 持久卷：Railway 控制台挂载到 /data 后，DB_PATH 指向的库文件即持久保存
+# 未挂载 volume 时文件系统是临时的，重启会清空数据库（仅适合演示）
+[[mounts]]
+directory = "/data"
+size = "1GB"
