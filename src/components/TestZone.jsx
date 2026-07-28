@@ -28,7 +28,7 @@ const tests = [
     title: '专属测评兑换',
     desc: '输入兑换码，解锁你们的专属测评与隐藏彩蛋。',
     tag: '福利',
-    href: 'https://redeem.couplegametest.link',
+    href: '#redeem',
   },
 ]
 

@@ -293,3 +293,57 @@ ul { list-style: none; }
   .zone, .why { padding: 64px 20px; }
   .stat { min-width: 110px; padding: 14px 22px; }
 }
+
+/* ---------- 兑换区 ---------- */
+.redeem-form {
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+.redeem-form__input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-align: center;
+  border-radius: 999px;
+  border: 1.5px solid var(--primary-soft);
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.redeem-form__input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.15);
+}
+.redeem-form__input::placeholder {
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.redeem-form__msg {
+  max-width: 520px;
+  margin: 18px auto 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 18px;
+  border-radius: 14px;
+}
+.redeem-form__msg--ok { color: #1f9d6b; background: #e7f8ef; }
+.redeem-form__msg--err { color: var(--primary-deep); background: #ffeef4; }
+.redeem-form__hint {
+  max-width: 520px;
+  margin: 16px auto 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+@media (max-width: 640px) {
+  .redeem-form { flex-direction: column; }
+}
