@@ -312,6 +312,8 @@ ul { list-style: none; }
   position: relative;
   width: 100%;
   max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
   background: #fff;
   border-radius: var(--radius);
   padding: 34px 30px 30px;
@@ -407,3 +409,19 @@ ul { list-style: none; }
   line-height: 1.7;
 }
 .quiz-result__actions { display: flex; gap: 12px; justify-content: center; }
+.quiz-section { text-align: left; margin: 22px 0; }
+.quiz-section__title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 10px;
+  padding-left: 12px;
+  border-left: 4px solid var(--primary);
+}
+.quiz-section__body {
+  font-size: 14.5px;
+  line-height: 1.85;
+  color: var(--ink);
+  margin: 0;
+  text-align: justify;
+}

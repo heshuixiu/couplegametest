@@ -166,40 +166,63 @@ const LAYER_TITLES = {
   4: '场域与吸引偏好',
 }
 
-const LAYER_PROFILE = {
+const SELF_READ = {
   1: {
-    A: '你天生是「和人待着就有电」的类型，社交和新鲜体验是你的能量源。',
-    B: '你的能量来自安静和自我空间，热闹之后需要一段「关机时间」回血。',
-    C: '你不是恒定档位——遇到有趣的事立刻满血，无聊的事秒变低电量。',
-    D: '你习惯把精力投在自己认准的事上，副业/爱好/学习是你的隐性充电器。',
+    A: '你这人天生带点电。下班还有精神想约人吃饭看展，社交和新鲜事就是你的充电宝。跟你待着不闷，但师傅提醒一句：别把电量都耗在别人身上，也得留点给自己。',
+    B: '你是个需要「关机时间」的人。外面热闹完了，你得自己待会儿才能回血。不是不爱人，是你得先把自己填满，才有余力给旁人。',
+    C: '你这人讲究「对味」。遇上有趣的事，瞬间满血；无聊的场合，你秒变低电量。别逼自己一直稳定，你的节奏本来就是波浪形的。',
+    D: '你表面看着随和，内里有个自己的小宇宙。副业、爱好、学习，你偷偷在那儿投入，那才是你真正回血的地方。',
   },
   2: {
-    A: '你信「先做了再说」，比起后悔没做，更怕错过。决定后很少回头看。',
-    B: '你倾向接受发生的事，不太跟自己较劲，相信该来的会来。',
-    C: '你做决定后会反复推演「如果选另一条路」，深度思考是你的习惯。',
-    D: '你最在意「这是我自己的选择」，活出自我比讨好别人更重要。',
+    A: '你做人信「先做了再说」。比起后悔没做，你更怕错过。这股冲劲是你最大的福气，也是偶尔栽跟头的地方——冲之前稍微瞄一眼路就行。',
+    B: '你心大，信「该来的会来」。不跟自己较劲，发生的事就接住。这份松弛很贵，但别让它变成什么都不争取。',
+    C: '你做完决定会反刍——「要是选了另一条路呢？」想得深是你的天赋，可也得防着自己钻牛角尖。',
+    D: '你最看重「这是我自己的主意」。为别人活、没活出自己，是你最怕的事。这辈子，自由比安稳重要。',
   },
   3: {
-    A: '有好感你会适度主动但不纠缠，挺享受暧昧初期的推拉。',
-    B: '你习惯先看对方意思再出手，怕自作多情，慢热但认真。',
-    C: '你不爱闲聊，却会用一条有意思的内容「投石问路」，心里其实很在意。',
-    D: '你要的是明确回应和深度默契，忽冷忽热或失去自我都会让你没安全感。',
+    A: '喜欢一个人，你会适度主动，但不纠缠。暧昧初期那点推拉，你其实挺享受。你不会作，分寸拿捏得刚好。',
+    B: '你有好感会先观望，怕自作多情。慢热，但一旦认定，比谁都认真。你等的不是人，是「他也喜欢我」那个确定感。',
+    C: '你不爱没话找话，却会甩一条有意思的内容「投石问路」。表面淡，心里门儿清，在意得很。',
+    D: '你要的是明明白白的回应和深度默契。忽冷忽热、或者让你失去自我，都会让你没安全感。你宁可单身，不肯凑合。',
   },
   4: {
-    A: '你被好看、有审美、或「正好是我找的东西」吸引，标准和眼光都清晰。',
-    B: '你被有趣、幽默、能带你看新世界的人吸引，无聊是减分项。',
-    C: '你被沉稳、靠谱、让你安心的人吸引，踏实比刺激重要。',
-    D: '你被有品味、生活过得漂亮、或专注热爱的人吸引，氛围感很加分。',
-    E: '你不太设标准，缘分到了就走过去，不刻意也不强求。',
+    A: '你眼光毒，也好看。门面有审美、或者正好是你找的东西，你才迈得进腿。你这人，标准和品味都清楚。',
+    B: '你被有趣的人勾走。幽默、能带你看新世界的，对你杀伤力最大。无聊，是你感情的减分项。',
+    C: '你认踏实。沉稳、靠谱、让你安心的人，比刺激更打动你。你图的是落地，不是心跳。',
+    D: '你有审美洁癖。生活过得漂亮、专注热爱的，对你杀伤力大。氛围感，是你感情的入场券。',
+    E: '你不设标准，缘分来了就走过去。不刻意、不强求，这份随缘，反倒让你容易撞上真东西。',
   },
 }
 
-const OVERALL = {
-  A: '你是自带光源的人——走到哪都带着能量和明确的偏好。',
-  B: '你是松弛而有品味的人，不慌不忙地过自己的节奏。',
-  C: '你是爱琢磨、重深度的人，表面随意内心很有戏。',
-  D: '你是认准就投入的人，要的是真实、踏实和自由。',
-  E: '你是随缘而自在的人，不刻意不强求，缘分自己会来。',
+const MASTER_OPEN = {
+  A: '师傅看了你的题——你是个自带光源的人，走到哪都带能量，也带明确的偏好。',
+  B: '师傅看了你的题——你是个松弛而有品味的人，不慌不忙地过自己的节奏。',
+  C: '师傅看了你的题——你是个爱琢磨、重深度的人，表面随意，内里很有戏。',
+  D: '师傅看了你的题——你是个认准就投入的人，要的是真实、踏实和自由。',
+  E: '师傅看了你的题——你是个随缘而自在的人，不刻意不强求，缘分自己会来。',
+}
+
+const WHERE = {
+  A: '对的人，多半在「好看又有内容」的地方。独立书店、设计展、有意思的咖啡馆、审美在线的市集。别去太嘈杂的场子，往「讲究」的地方走，你的缘分在那儿等你。',
+  B: '你得往「好玩」的地方扎。脱口秀、livehouse、户外局、朋友组的奇怪局。能让你笑、让你新鲜的地方，藏着你的缘分。',
+  C: '踏实的人不爱浪，他们就在各自的生活圈里。行业活动、读书会、长期运动的小团体、朋友介绍。慢但稳的路子，适合你。',
+  D: '你的缘分在「过得好看」的场子里。画展、手作工坊、精致的小酒馆、审美在线的社群。你被氛围吸引，也得去氛围对的地方。',
+  E: '你这人哪儿都能遇见。但师傅劝你，别只在日常里打转——换个常去的新店、报个一直想学的课，缘分就从不经意处来。',
+}
+
+const PARTNER = {
+  A: '她是有见识的人，能跟你聊很深的话题，不肤浅。跟她说话，你觉得脑子被打开，时间过得飞快。',
+  B: '她有趣、幽默，总能把你带去看新世界。跟她在一起，日子不重样，永远不会腻。',
+  C: '她沉稳、靠谱，让你觉得安心。不定时放烟火，但你知道她一直在。这种踏实，正是你图的。',
+  D: '她有审美、有品味，把日子过得很漂亮。看她生活，本身就是种享受。',
+  E: '她专注在自己热爱的事里，那种「眼里有光」的样子最打动你。她不一定话多，但认真起来特别迷人。',
+}
+
+const TOGETHER = {
+  A: '你们是「有来有回」的相处。你主动但不黏，她也给信号。暧昧期短、确定得快，平时各自精彩，见面就热乎。',
+  B: '你们需要一点「确定感」打底。她得让你知道她也喜欢你，你才肯全情投入。一旦定了，你比谁都稳。',
+  C: '你们不靠废话维系。平时各忙各的，偶尔甩个有意思的东西过去，心里都懂。沉默也不尴尬，是你们的默契。',
+  D: '你们要的是「明文约定」。回应要明确，空间要给够，谁也别吞没谁。边界清楚的关系，才让你安心长久。',
 }
 
 export default function QuizModal({ onClose }) {
@@ -233,6 +256,9 @@ export default function QuizModal({ onClose }) {
 
   let layerResult = []
   let overallLetter = 'A'
+  let layer3Letter = 'A'
+  let layer4Letter = 'A'
+  let partnerLetter = 'A'
   if (isResult) {
     const counts = { 1: {}, 2: {}, 3: {}, 4: {} }
     const overallCounts = {}
@@ -241,24 +267,25 @@ export default function QuizModal({ onClose }) {
       counts[layer][letter] = (counts[layer][letter] || 0) + 1
       overallCounts[letter] = (overallCounts[letter] || 0) + 1
     })
-    for (const L of [1, 2, 3, 4]) {
+    const pickBest = (obj) => {
       let best = null
       let bestN = -1
-      for (const k of Object.keys(counts[L])) {
-        if (counts[L][k] > bestN) {
-          bestN = counts[L][k]
+      for (const k of Object.keys(obj)) {
+        if (obj[k] > bestN) {
+          bestN = obj[k]
           best = k
         }
       }
-      layerResult.push({ layer: L, desc: LAYER_PROFILE[L][best] })
+      return best
     }
-    let overallN = -1
-    for (const k of Object.keys(overallCounts)) {
-      if (overallCounts[k] > overallN) {
-        overallN = overallCounts[k]
-        overallLetter = k
-      }
+    for (const L of [1, 2, 3, 4]) {
+      const best = pickBest(counts[L])
+      layerResult.push({ layer: L, desc: SELF_READ[L][best] })
     }
+    overallLetter = pickBest(overallCounts)
+    layer3Letter = pickBest(counts[3])
+    layer4Letter = pickBest(counts[4])
+    partnerLetter = answers[13] || 'A' // Q14 吸引偏好
   }
 
   return (
@@ -290,21 +317,41 @@ export default function QuizModal({ onClose }) {
           </>
         ) : (
           <div className="quiz-result">
-            <span className="quiz-result__emoji">✨</span>
-            <h3 className="quiz-result__title">你的相遇画像</h3>
+            <span className="quiz-result__emoji">🔮</span>
+            <h3 className="quiz-result__title">师傅批命 · 你的相遇签</h3>
             <p className="quiz-result__desc quiz-result__overall">
-              {OVERALL[overallLetter]}
+              {MASTER_OPEN[overallLetter]}
             </p>
-            <div className="quiz-layers">
-              {layerResult.map((r) => (
-                <div className="quiz-layer" key={r.layer}>
-                  <span className="quiz-layer__title">
-                    {LAYER_TITLES[r.layer]}
-                  </span>
-                  <span className="quiz-layer__desc">{r.desc}</span>
-                </div>
-              ))}
+
+            <div className="quiz-section">
+              <h4 className="quiz-section__title">一、你是个怎样的人</h4>
+              <div className="quiz-layers">
+                {layerResult.map((r) => (
+                  <div className="quiz-layer" key={r.layer}>
+                    <span className="quiz-layer__title">
+                      {LAYER_TITLES[r.layer]}
+                    </span>
+                    <span className="quiz-layer__desc">{r.desc}</span>
+                  </div>
+                ))}
+              </div>
             </div>
+
+            <div className="quiz-section">
+              <h4 className="quiz-section__title">二、去哪里遇见对的人</h4>
+              <p className="quiz-section__body">{WHERE[layer4Letter]}</p>
+            </div>
+
+            <div className="quiz-section">
+              <h4 className="quiz-section__title">三、她是什么样的人</h4>
+              <p className="quiz-section__body">{PARTNER[partnerLetter]}</p>
+            </div>
+
+            <div className="quiz-section">
+              <h4 className="quiz-section__title">四、你们会怎样相处</h4>
+              <p className="quiz-section__body">{TOGETHER[layer3Letter]}</p>
+            </div>
+
             <div className="quiz-result__actions">
               <button className="btn btn--ghost btn--sm" onClick={restart}>
                 再测一次
