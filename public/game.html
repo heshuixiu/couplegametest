@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Shot Challenge - Memory &amp; Reflex Game</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#fff;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none}
+#app{width:100vw;height:100vh;position:relative;overflow:hidden}
+
+/* ===== Screens ===== */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .35s ease,transform .35s ease;padding:16px}
+.screen.hidden{opacity:0;pointer-events:none;transform:scale(.96)}
+
+/* ===== Menu ===== */
+#menu-screen{background:radial-gradient(ellipse at 50% 30%,#1a2332 0%,#0d1117 70%)}
+.logo-ball{font-size:56px;animation:bounce 1.6s ease-in-out infinite;margin-bottom:6px;filter:drop-shadow(0 6px 20px rgba(255,107,53,.4))}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-12px) rotate(180deg)}}
+.game-title{font-size:clamp(28px,7vw,48px);font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,#ff8c42,#ff6b35,#ffd23f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center}
+.game-subtitle{font-size:clamp(11px,3vw,14px);color:#6b7280;margin-top:4px;margin-bottom:22px;letter-spacing:1px}
+.rules-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px 20px;max-width:440px;width:100%;margin-bottom:20px}
+.rules-card h3{font-size:14px;color:#ff8c42;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.rules-card ul{list-style:none;font-size:12.5px;line-height:1.9;color:#9ca3af}
+.rules-card li{display:flex;align-items:flex-start;gap:6px}
+.rules-card li::before{content:'';width:5px;height:5px;border-radius:50%;background:#ff6b35;margin-top:8px;flex-shrink:0}
+.rules-card li b{color:#e5e7eb;font-weight:600}
+.difficulty-group{display:flex;gap:10px;margin-bottom:22px}
+.diff-btn{padding:10px 22px;border:2px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.03);color:#9ca3af;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.diff-btn:hover{border-color:rgba(255,140,66,.4);color:#fff}
+.diff-btn.active{border-color:#ff8c42;background:linear-gradient(135deg,rgba(255,107,53,.25),rgba(255,140,66,.15));color:#ff8c42;box-shadow:0 4px 16px rgba(255,107,53,.2)}
+.btn-primary{padding:14px 44px;border:none;border-radius:50px;background:linear-gradient(135deg,#ff6b35,#ff8c42);color:#fff;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(255,107,53,.45);transition:transform .15s,box-shadow .15s;letter-spacing:1px}
+.btn-primary:hover{box-shadow:0 8px 30px rgba(255,107,53,.6)}
+.btn-primary:active{transform:scale(.95)}
+
+/* ===== Game ===== */
+#game-screen{background:linear-gradient(180deg,#0d1117 0%,#131923 40%,#1a2332 100%)}
+#game-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;top:0;left:0;right:0;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;z-index:10;pointer-events:none}
+.hud-item{background:rgba(13,17,23,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px}
+.hud-label{font-size:10px;color:#6b7280;font-weight:500}
+.hud-score .hud-val{color:#ff8c42;font-size:18px}
+.hud-timer .hud-val{color:#4ecca3;font-size:18px}
+.hud-timer.danger .hud-val{color:#ff4757;animation:pulse .5s ease-in-out infinite}
+.hud-combo .hud-val{color:#ffd23f;font-size:18px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.shot-banner{position:absolute;bottom:150px;left:50%;transform:translateX(-50%);z-index:10;padding:5px 16px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:1px;transition:opacity .3s}
+.shot-2{background:rgba(78,204,163,.15);border:1px solid rgba(78,204,163,.3);color:#4ecca3}
+.shot-3{background:rgba(255,210,63,.15);border:1px solid rgba(255,210,63,.3);color:#ffd23f}
+
+/* ===== Shoot Button + Aim Joystick ===== */
+.btn-zone{position:absolute;bottom:0;left:0;right:0;height:210px;display:flex;align-items:flex-end;justify-content:center;z-index:10;padding-bottom:28px}
+.shoot-btn-wrap{position:relative;width:96px;height:96px}
+.shoot-btn{width:100%;height:100%;border-radius:50%;border:none;background:radial-gradient(circle at 35% 30%,#ffab73,#ff6b35 50%,#c44510);color:#fff;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;box-shadow:0 8px 28px rgba(255,107,53,.45),inset 0 -5px 12px rgba(0,0,0,.25),inset 0 3px 8px rgba(255,255,255,.2);transition:transform .1s;letter-spacing:1px;position:relative;z-index:3}
+.shoot-btn::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(255,107,53,.3);animation:ring 2s ease-in-out infinite}
+@keyframes ring{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.12);opacity:0}}
+.shoot-btn:active{transform:scale(.9)}
+.shoot-btn:disabled{opacity:.35;cursor:not-allowed}
+.shoot-btn:disabled::before{display:none}
+.shoot-btn .icon{font-size:28px}
+
+/* aim indicator inside the button zone */
+.aim-dot{position:absolute;width:16px;height:16px;background:#ffd23f;border-radius:50%;box-shadow:0 0 20px rgba(255,210,63,.8),0 0 40px rgba(255,107,53,.5);pointer-events:none;z-index:5;transform:translate(-50%,-50%);transition:opacity .15s;opacity:0}
+.aim-dot.visible{opacity:1}
+.aim-hint{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);padding:6px 14px;background:rgba(0,0,0,.7);border:1px solid rgba(255,210,63,.3);border-radius:20px;color:#ffd23f;font-size:11px;font-weight:600;white-space:nowrap;pointer-events:none;z-index:4;display:none;margin-bottom:80px;transition:opacity .2s}
+.aim-hint.visible{display:block}
+
+/* ===== Game Over ===== */
+#gameover-screen{background:radial-gradient(ellipse at 50% 30%,#1a2332 0%,#0d1117 70%)}
+.result-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px;max-width:400px;width:100%;text-align:center}
+.result-title{font-size:20px;font-weight:800;color:#ff8c42;margin-bottom:4px}
+.result-diff{font-size:12px;color:#6b7280;margin-bottom:16px}
+.result-score{font-size:56px;font-weight:900;background:linear-gradient(135deg,#ffd23f,#ff8c42);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:4px}
+.result-score-label{font-size:12px;color:#6b7280;margin-bottom:18px}
+.result-stats{display:flex;justify-content:space-around;margin-bottom:18px;padding:14px 0;border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06)}
+.stat-item{text-align:center}
+.stat-val{font-size:22px;font-weight:800;color:#4ecca3}
+.stat-lbl{font-size:10px;color:#6b7280;margin-top:2px}
+.lb-section{margin-bottom:18px}
+.lb-section h4{font-size:13px;color:#ff8c42;margin-bottom:8px;text-align:center}
+.lb-list{max-height:180px;overflow-y:auto}
+.lb-list::-webkit-scrollbar{width:4px}
+.lb-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+.lb-item{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:12px;border-radius:6px;margin-bottom:2px}
+.lb-item:nth-child(1){background:rgba(255,210,63,.08)}
+.lb-item:nth-child(2){background:rgba(192,192,192,.06)}
+.lb-item:nth-child(3){background:rgba(205,127,50,.06)}
+.lb-rank{font-weight:800;width:24px;text-align:center}
+.lb-item:nth-child(1) .lb-rank{color:#ffd23f}
+.lb-item:nth-child(2) .lb-rank{color:#c0c0c0}
+.lb-item:nth-child(3) .lb-rank{color:#cd7f32}
+.lb-score{color:#4ecca3;font-weight:700;min-width:50px}
+.lb-detail{color:#6b7280;font-size:10.5px;flex:1;text-align:right}
+.lb-empty{text-align:center;color:#4b5563;font-size:12px;padding:16px}
+.btn-row{display:flex;gap:10px;justify-content:center}
+.btn-ghost{padding:12px 22px;border:1.5px solid rgba(255,255,255,.12);border-radius:10px;background:transparent;color:#9ca3af;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-ghost:hover{border-color:rgba(255,140,66,.4);color:#fff}
+
+/* ===== Effects ===== */
+.score-pop{position:absolute;font-size:26px;font-weight:900;pointer-events:none;z-index:20;text-shadow:0 2px 12px rgba(0,0,0,.5);animation:scorePop .9s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes scorePop{0%{transform:translate(-50%,0) scale(.3);opacity:0}25%{transform:translate(-50%,-18px) scale(1.3);opacity:1}100%{transform:translate(-50%,-70px) scale(.9);opacity:0}}
+.combo-flash{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);font-size:42px;font-weight:900;pointer-events:none;z-index:15;text-shadow:0 0 24px rgba(255,210,63,.7);animation:comboFlash .7s ease-out forwards;white-space:nowrap}
+@keyframes comboFlash{0%{transform:translate(-50%,-50%) scale(0) rotate(-8deg);opacity:0}30%{transform:translate(-50%,-50%) scale(1.4) rotate(2deg);opacity:1}100%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:0}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== MENU ===== -->
+  <div id="menu-screen" class="screen">
+    <div class="logo-ball">🏀</div>
+    <h1 class="game-title">Shot Challenge</h1>
+    <p class="game-subtitle">MEMORY · REACTION · 30s</p>
+    <div class="rules-card">
+      <h3>📋 Game Rules</h3>
+      <ul>
+        <li>Each round lasts <b>30 seconds</b>. <b>Hold &amp; drag the Shoot button upward</b> to aim, release to throw</li>
+        <li><b>Easy</b>: slow hoop ｜ <b>Hard</b>: faster ｜ <b>Extreme</b>: blazing fast</li>
+        <li>2-Pointer <b>+2</b>, 3-Pointer <b>+3</b> (smaller scoring window)</li>
+        <li>Combo bonus: <b>2-streak +2, 3-streak +3, 4-streak +4&hellip;</b> the streak never stops</li>
+        <li>Miss resets the combo. Top 10 leaderboard per difficulty.</li>
+      </ul>
+    </div>
+    <div class="difficulty-group">
+      <button class="diff-btn active" data-diff="easy">Easy</button>
+      <button class="diff-btn" data-diff="hard">Hard</button>
+      <button class="diff-btn" data-diff="super">Extreme</button>
+    </div>
+    <button class="btn-primary" id="btn-start">Start Game</button>
+  </div>
+
+  <!-- ===== GAME ===== -->
+  <div id="game-screen" class="screen hidden">
+    <canvas id="game-canvas"></canvas>
+    <div class="hud">
+      <div class="hud-item hud-score"><span class="hud-label">Score</span><span class="hud-val" id="hud-score">0</span></div>
+      <div class="hud-item hud-timer" id="hud-timer-wrap"><span class="hud-label">Time</span><span class="hud-val" id="hud-timer">30</span><span style="font-size:11px;color:#6b7280">s</span></div>
+      <div class="hud-item hud-combo"><span class="hud-label">Combo</span><span class="hud-val" id="hud-combo">0</span></div>
+    </div>
+    <div class="shot-banner shot-2" id="shot-banner">2-Pointer</div>
+    <!-- Shoot button with aim zone -->
+    <div class="btn-zone" id="btn-zone">
+      <div class="aim-hint" id="aim-hint">👆 Hold &amp; Drag Up to Aim</div>
+      <div class="aim-dot" id="aim-dot"></div>
+      <div class="shoot-btn-wrap">
+        <button class="shoot-btn" id="btn-shoot">
+          <span class="icon">🏀</span>
+          <span>Shoot</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GAME OVER ===== -->
+  <div id="gameover-screen" class="screen hidden">
+    <div class="result-card">
+      <div class="result-title">Game Over</div>
+      <div class="result-diff" id="result-diff">Easy Mode</div>
+      <div class="result-score" id="result-score">0</div>
+      <div class="result-score-label">Final Score</div>
+      <div class="result-stats">
+        <div class="stat-item"><div class="stat-val" id="result-shots">0</div><div class="stat-lbl">Shots</div></div>
+        <div class="stat-item"><div class="stat-val" id="result-hits">0</div><div class="stat-lbl">Hits</div></div>
+        <div class="stat-item"><div class="stat-val" id="result-acc">0%</div><div class="stat-lbl">Accuracy</div></div>
+        <div class="stat-item"><div class="stat-val" id="result-maxcombo">0</div><div class="stat-lbl">Max Combo</div></div>
+      </div>
+      <div class="lb-section">
+        <h4>🏆 Leaderboard (<span id="lb-diff-label">Easy</span>)</h4>
+        <div class="lb-list" id="lb-list"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-ghost" id="btn-back">Back to Menu</button>
+        <button class="btn-primary" id="btn-again" style="padding:12px 28px;font-size:14px">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+
+// ============================================================
+//  CONFIG
+// ============================================================
+var DIFF = {
+  easy:  { speed:1.0, window:55, label:'Easy' },
+  hard:  { speed:1.8, window:40, label:'Hard' },
+  super: { speed:2.8, window:28, label:'Extreme' }
+};
+var GAME_TIME       = 30;
+var GRAVITY         = 0.9;
+var BALL_R          = 20;
+var HOOP_Y_RATIO    = 0.30;
+var PEAK_OFFSET     = 50;
+var BALL_START_OFF  = 80;
+var MAX_AIM_ANGLE   = 75;     // degrees — max left/right
+var AIM_MAX_OFFSET  = 0.38;   // ratio of screen width for max aim dx
+
+// ============================================================
+//  STATE
+// ============================================================
+var state       = 'menu';
+var difficulty  = 'easy';
+var canvas, ctx, W, H, dpr;
+var hoop, ball;
+var score, combo, maxCombo, shots, hits;
+var timeLeft, timerId, rafId;
+var shotType;
+var ballTrail   = [];
+var hoopShake   = 0;
+var netSway     = 0;
+var screenShake = 0;
+var swishGlow   = 0;
+var audioCtx    = null;
+
+// aim state
+var aiming      = false;
+var hasAimed    = false;  // true = user dragged to aim, false = tap/space (auto-track hoop)
+var aimAngle    = 0;     // -MAX_AIM_ANGLE … +MAX_AIM_ANGLE  (neg=left, pos=right)
+var aimStartX   = 0;
+var aimStartY   = 0;
+var aimTouchId  = null;  // track the specific touch for multi-touch
+var aimDx       = 0;     // raw finger offset dx
+var aimDy       = 0;     // raw finger offset dy
+
+// ============================================================
+//  AUDIO
+// ============================================================
+function initAudio(){
+  if(audioCtx) return;
+  try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+}
+function beep(freq,dur,type,vol){
+  if(!audioCtx) return;
+  var osc=audioCtx.createOscillator(), g=audioCtx.createGain();
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.frequency.value=freq; osc.type=type||'sine';
+  var v=vol||0.15;
+  g.gain.setValueAtTime(v,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+  osc.start(); osc.stop(audioCtx.currentTime+dur);
+}
+function sndScore(c){
+  beep(523,0.08,'sine',0.12);
+  setTimeout(function(){beep(659,0.08,'sine',0.12);},60);
+  setTimeout(function(){beep(784,0.12,'sine',0.12);},120);
+  if(c>=3){ setTimeout(function(){beep(400+c*60,0.15,'triangle',0.1);},180); }
+}
+function sndMiss(){ beep(180,0.12,'sawtooth',0.08); }
+function sndShoot(){ beep(300,0.05,'sine',0.06); }
+function sndTick(){ beep(880,0.05,'sine',0.05); }
+
+// ============================================================
+//  CANVAS
+// ============================================================
+function initCanvas(){
+  canvas = document.getElementById('game-canvas');
+  ctx = canvas.getContext('2d');
+  resize();
+}
+function resize(){
+  if(!canvas) return;
+  dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  canvas.width  = Math.round(rect.width  * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  W = rect.width;
+  H = rect.height;
+  if(hoop){ hoop.y = H * HOOP_Y_RATIO; }
+  if(ball && !ball.active){ ball.x = W/2; ball.y = H - BALL_START_OFF; }
+}
+
+// ============================================================
+//  GAME INIT
+// ============================================================
+function initGame(){
+  hoop = {
+    x: W/2,
+    y: H * HOOP_Y_RATIO,
+    w: 80,
+    speed: DIFF[difficulty].speed,
+    dir: 1,
+    hitWindow: DIFF.easy.window  // all difficulties use same hoop size; only speed changes
+  };
+  ball = {
+    x: W/2, y: H - BALL_START_OFF, r: BALL_R,
+    vx: 0, vy: 0, active: false, scored: false, passed: false,
+    prevY: 0, rotation: 0
+  };
+  score = 0; combo = 0; maxCombo = 0; shots = 0; hits = 0;
+  timeLeft = GAME_TIME;
+  shotType = Math.random() < 0.55 ? 2 : 3;
+  ballTrail = [];
+  hoopShake = 0; netSway = 0; screenShake = 0; swishGlow = 0;
+  aimAngle = 0; aiming = false;
+  updateHUD();
+  updateShotBanner();
+  document.getElementById('btn-shoot').disabled = false;
+  document.getElementById('hud-timer-wrap').classList.remove('danger');
+}
+
+// ============================================================
+//  SHOOT — arc trajectory toward the aim direction
+// ============================================================
+function shoot(){
+  if(ball.active || state !== 'playing') return;
+  initAudio();
+  ball.active = true;
+  ball.scored = false;
+  ball.passed = false;
+  ball.rotation = 0;
+  shots++;
+  sndShoot();
+  ballTrail = [];
+
+  // Calculate vertical velocity (arc to hoop height)
+  var peakY = hoop.y - PEAK_OFFSET;
+  var dyToPeak = ball.y - peakY;
+  if(dyToPeak < 10) dyToPeak = 10;
+  ball.vy = -Math.sqrt(2 * GRAVITY * dyToPeak);
+
+  // Flight time to reach hoop.y level
+  var tPeak  = Math.abs(ball.vy) / GRAVITY;
+  var tFall  = Math.sqrt(2 * PEAK_OFFSET / GRAVITY);
+  var totalT = tPeak + tFall;
+
+  // Horizontal aim
+  if(hasAimed){
+    // User dragged — use the aim angle
+    var maxDx = W * AIM_MAX_OFFSET;
+    var dx = (aimAngle / MAX_AIM_ANGLE) * maxDx;
+    ball.vx = dx / totalT;
+  } else {
+    // Tap or spacebar — auto-track hoop's current position (v2 behavior)
+    ball.vx = (hoop.x - ball.x) / totalT;
+  }
+  ball.prevY = ball.y;
+}
+
+// ============================================================
+//  AIM — input handling
+// ============================================================
+function startAim(e, touchObj){
+  if(ball.active || state !== 'playing') return;
+  aiming = true;
+  hasAimed = false;
+  initAudio();
+  var pt = getPoint(e, touchObj);
+  aimStartX = pt.x;
+  aimStartY = pt.y;
+  aimAngle  = 0;
+  aimDx = 0; aimDy = 0;
+  aimTouchId = touchObj ? touchObj.identifier : 'mouse';
+  updateAimVisuals();
+}
+
+function moveAim(e, touchObj){
+  if(!aiming) return;
+  // for touch: only track the finger that started the aim
+  if(touchObj && touchObj.identifier !== aimTouchId) return;
+  var pt = getPoint(e, touchObj);
+  aimDx = pt.x - aimStartX;
+  aimDy = pt.y - aimStartY;
+
+  // Only forward: dy must be negative (finger moved UP)
+  // if finger went down, clamp dy to 0 and ignore backward dx too
+  if(aimDy > 0) aimDy = 0;
+
+  // Calculate angle from vertical (0 = straight up)
+  var rawDist = Math.sqrt(aimDx*aimDx + aimDy*aimDy);
+  if(rawDist < 5){
+    aimAngle = 0;
+    aimDx = 0; aimDy = 0;
+  } else {
+    // angle from the vertical; dx positive = right, negative = left
+    var rawAngle = Math.atan2(-aimDx, -aimDy) * 180 / Math.PI;
+    aimAngle = clamp(rawAngle, -MAX_AIM_ANGLE, MAX_AIM_ANGLE);
+    hasAimed = true;  // meaningful drag — user is aiming
+  }
+  updateAimVisuals();
+}
+
+function endAim(e, touchObj){
+  if(!aiming) return;
+  if(touchObj && touchObj.identifier !== aimTouchId) return;
+  aiming = false;
+  aimTouchId = null;
+  document.getElementById('aim-dot').classList.remove('visible');
+  document.getElementById('aim-hint').classList.remove('visible');
+
+  // Fire on tap (auto-track hoop) or drag-release (aimed shot)
+  if(aimDy <= 0 && state === 'playing' && !ball.active){
+    shoot();
+    document.getElementById('btn-shoot').disabled = true;
+  }
+}
+
+function updateAimVisuals(){
+  var dot = document.getElementById('aim-dot');
+  var hint = document.getElementById('aim-hint');
+  if(!aiming || aimDy >= 0){
+    dot.classList.remove('visible');
+    dot.style.top  = '60px';
+    dot.style.left = '50%';
+    hint.classList.remove('visible');
+    return;
+  }
+  dot.classList.add('visible');
+  // Position dot relative to aimDx/aimDy (capped for visual)
+  var vDx = clamp(aimDx, -80, 80);
+  var vDy = clamp(aimDy, -140, -5);
+  dot.style.left = (50 + vDx/0.8) + '%';
+  dot.style.top  = (60 + vDy/0.8) + '%';
+  hint.classList.add('visible');
+}
+
+function getPoint(e, touchObj){
+  if(touchObj){
+    return { x: touchObj.clientX, y: touchObj.clientY };
+  }
+  return { x: e.clientX, y: e.clientY };
+}
+
+function clamp(v, lo, hi){ return v < lo ? lo : v > hi ? hi : v; }
+
+// ============================================================
+//  UPDATE
+// ============================================================
+function update(){
+  if(state !== 'playing') return;
+
+  // --- hoop movement ---
+  hoop.x += hoop.speed * hoop.dir;
+  var margin = hoop.w / 2 + 10;
+  if(hoop.x > W - margin){ hoop.x = W - margin; hoop.dir = -1; }
+  if(hoop.x < margin){ hoop.x = margin; hoop.dir = 1; }
+
+  // --- ball physics ---
+  if(ball.active){
+    ball.prevY = ball.y;
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    ball.vy += GRAVITY;
+    ball.rotation += 0.18;
+
+    ballTrail.push({x:ball.x, y:ball.y});
+    if(ballTrail.length > 16) ballTrail.shift();
+
+    // Hit detection: ball coming DOWN through the hoop level
+    if(!ball.passed && ball.vy > 0 && ball.prevY <= hoop.y && ball.y >= hoop.y){
+      ball.passed = true;
+      var dist = Math.abs(ball.x - hoop.x);
+      var win = shotType === 3 ? hoop.hitWindow * 0.72 : hoop.hitWindow;
+      if(dist < win){
+        // ===== SCORE! =====
+        ball.scored = true;
+        hits++;
+        combo++;
+        if(combo > maxCombo) maxCombo = combo;
+        var base = shotType;
+        var bonus = combo >= 2 ? combo : 0;
+        var total = base + bonus;
+        score += total;
+        hoopShake = 10; netSway = 18; swishGlow = 20;
+        if(combo >= 4) screenShake = 6;
+        showScorePop(ball.x, hoop.y, '+'+total, bonus > 0);
+        if(combo >= 3) showComboFlash(combo);
+        sndScore(combo);
+        updateHUD();
+      } else {
+        combo = 0;
+        updateHUD();
+        sndMiss();
+      }
+    }
+
+    if(ball.passed && ball.y > hoop.y + 80){ resetBall(); }
+    if(ball.y > H + 80 || ball.x < -80 || ball.x > W + 80){
+      if(!ball.passed){ combo = 0; updateHUD(); }
+      resetBall();
+    }
+  }
+
+  // decay effects
+  if(hoopShake > 0) hoopShake -= 0.5;
+  if(netSway > 0) netSway -= 1.0;
+  if(screenShake > 0) screenShake -= 0.4;
+  if(swishGlow > 0) swishGlow--;
+}
+
+function resetBall(){
+  ball.x = W / 2;
+  ball.y = H - BALL_START_OFF;
+  ball.vy = 0; ball.vx = 0;
+  ball.active = false; ball.scored = false; ball.passed = false;
+  ball.rotation = 0;
+  ballTrail = [];
+  shotType = Math.random() < 0.55 ? 2 : 3;
+  aimAngle = 0;
+  updateShotBanner();
+  document.getElementById('btn-shoot').disabled = false;
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+function render(){
+  ctx.clearRect(0,0,W,H);
+
+  ctx.save();
+  if(screenShake > 0){
+    ctx.translate((Math.random()-0.5)*screenShake, (Math.random()-0.5)*screenShake);
+  }
+
+  drawCourt();
+  drawHoop();
+  drawBallTrail();
+  drawBall();
+  if(aiming) drawAimLine();
+
+  ctx.restore();
+}
+
+function drawAimLine(){
+  if(aimDy >= 0) return;
+
+  var startX = W / 2;
+  var startY = H - BALL_START_OFF;
+
+  // Calculate target point at hoop.y level
+  var maxDx  = W * AIM_MAX_OFFSET;
+  var targetDx = (aimAngle / MAX_AIM_ANGLE) * maxDx;
+  var targetX  = startX + targetDx;
+  var targetY  = hoop.y;
+
+  // Draw a dotted parabolic arc from start to target
+  var cx = (startX + targetX) / 2;
+  var cy = hoop.y - PEAK_OFFSET - 15; // control point above
+
+  ctx.save();
+  ctx.setLineDash([6, 8]);
+  ctx.lineDashOffset = 0;
+  ctx.strokeStyle = 'rgba(255,210,63,0.55)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.quadraticCurveTo(cx, cy, targetX, targetY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Arrowhead at target
+  var arrowSize = 12;
+  var angle = Math.atan2(targetY - cy, targetX - cx);
+  ctx.fillStyle = 'rgba(255,210,63,0.8)';
+  ctx.beginPath();
+  ctx.moveTo(targetX, targetY);
+  ctx.lineTo(
+    targetX - arrowSize * Math.cos(angle - 0.5),
+    targetY - arrowSize * Math.sin(angle - 0.5)
+  );
+  ctx.lineTo(
+    targetX - arrowSize * Math.cos(angle + 0.5),
+    targetY - arrowSize * Math.sin(angle + 0.5)
+  );
+  ctx.closePath();
+  ctx.fill();
+
+  // Target circle at landing spot
+  ctx.strokeStyle = 'rgba(255,210,63,0.7)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(targetX, targetY, 8, 0, Math.PI*2);
+  ctx.stroke();
+  // crosshair inside
+  ctx.strokeStyle = 'rgba(255,210,63,0.5)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(targetX-6,targetY); ctx.lineTo(targetX+6,targetY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(targetX,targetY-6); ctx.lineTo(targetX,targetY+6); ctx.stroke();
+
+  // Aim angle label
+  var labelX = targetX;
+  var labelY = targetY - 20;
+  ctx.fillStyle = 'rgba(255,210,63,0.9)';
+  ctx.font = 'bold 11px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  var absAngle = Math.abs(aimAngle);
+  var dirLabel = aimAngle < -2 ? 'Left' : aimAngle > 2 ? 'Right' : 'Straight';
+  ctx.fillText(dirLabel + ' ' + absAngle.toFixed(0) + '°', labelX, labelY);
+
+  ctx.restore();
+}
+
+function drawCourt(){
+  var fg = ctx.createLinearGradient(0, H*0.65, 0, H);
+  fg.addColorStop(0,'rgba(255,107,53,0)');
+  fg.addColorStop(1,'rgba(255,107,53,0.04)');
+  ctx.fillStyle = fg;
+  ctx.fillRect(0, H*0.65, W, H*0.35);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  var r = Math.min(W*0.38, 220);
+  ctx.arc(W/2, H-80, r, Math.PI*1.15, Math.PI*1.85);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(W/2 - 55, H - 190);
+  ctx.lineTo(W/2 + 55, H - 190);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.beginPath();
+  ctx.moveTo(W/2, H*0.5);
+  ctx.lineTo(W/2, H-80);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.015)';
+  ctx.lineWidth = 1;
+  for(var y=0; y<H; y+=40){
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+}
+
+function drawHoop(){
+  var sx = hoopShake > 0 ? (Math.random()-0.5)*hoopShake : 0;
+  var x = hoop.x + sx;
+  var y = hoop.y;
+  var win = shotType === 3 ? hoop.hitWindow * 0.72 : hoop.hitWindow;
+
+  if(swishGlow > 0){
+    var glowAlpha = swishGlow / 20 * 0.25;
+    var glowR = win + (20 - swishGlow) * 4;
+    var grad = ctx.createRadialGradient(x, y, 0, x, y, glowR);
+    grad.addColorStop(0, 'rgba(78,204,163,' + glowAlpha + ')');
+    grad.addColorStop(1, 'rgba(78,204,163,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, glowR, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(x - 52, y - 38, 104, 32);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x - 52, y - 38, 104, 32);
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x - 26, y - 28, 52, 22);
+
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = 'rgba(255,71,87,0.5)';
+  ctx.strokeStyle = '#ff4757';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.ellipse(x, y, win, 5, 0, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.strokeStyle = '#ff6b81';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(x, y, win, 5, 0, 0, Math.PI);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.lineWidth = 1;
+  var sway = netSway > 0 ? Math.sin(Date.now()*0.03) * netSway * 0.3 : 0;
+  var netH = 26;
+  var segs = 7;
+  for(var i=0; i<=segs; i++){
+    var t = i/segs;
+    var topX = x - win + t * win * 2;
+    var botX = x - win*0.55 + t * win * 1.1 + sway;
+    ctx.beginPath();
+    ctx.moveTo(topX, y);
+    ctx.lineTo(botX, y + netH);
+    ctx.stroke();
+  }
+  for(var row=1; row<=2; row++){
+    var ry = y + (netH * row / 3);
+    var rw = win * (1 - row*0.18);
+    ctx.beginPath();
+    ctx.ellipse(x + sway*row*0.3, ry, rw, rw*0.12, 0, 0, Math.PI*2);
+    ctx.stroke();
+  }
+}
+
+function drawBallTrail(){
+  if(ballTrail.length < 2) return;
+  for(var i=0; i<ballTrail.length-1; i++){
+    var p = ballTrail[i];
+    var t = i / ballTrail.length;
+    var alpha = t * 0.35;
+    var pScale = 1 - (1 - p.y / H) * 0.35;
+    if(pScale < 0.55) pScale = 0.55;
+    var r = BALL_R * (0.25 + t * 0.55) * pScale;
+    if(r < 2) r = 2;
+    ctx.fillStyle = 'rgba(255,140,66,'+alpha+')';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawBall(){
+  if(ball.y < -60 || ball.y > H + 60) return;
+  var x = ball.x, y = ball.y;
+  var pScale = 1 - (1 - y / H) * 0.35;
+  if(pScale < 0.55) pScale = 0.55;
+  var r = BALL_R * pScale;
+
+  if(!ball.active || y > H - 140){
+    var sh = ball.active ? 0.12 : 0.22;
+    ctx.fillStyle = 'rgba(0,0,0,'+sh+')';
+    ctx.beginPath();
+    ctx.ellipse(x, H-65, r*0.9, r*0.25, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(ball.rotation);
+
+  var g = ctx.createRadialGradient(-r*0.35, -r*0.35, 0, 0, 0, r);
+  g.addColorStop(0,'#ffab73');
+  g.addColorStop(0.5,'#ff6b35');
+  g.addColorStop(1,'#b8410c');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(40,20,0,0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-r); ctx.lineTo(0,r); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(0,0,r*0.45,r,0,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(0,0,r,r*0.45,0,0,Math.PI*2); ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.beginPath();
+  ctx.arc(-r*0.35, -r*0.35, r*0.25, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// ============================================================
+//  HUD & UI
+// ============================================================
+function updateHUD(){
+  document.getElementById('hud-score').textContent = score;
+  document.getElementById('hud-combo').textContent = combo;
+}
+function updateShotBanner(){
+  var el = document.getElementById('shot-banner');
+  if(shotType === 2){
+    el.textContent = '2-Pointer +2';
+    el.className = 'shot-banner shot-2';
+  } else {
+    el.textContent = '3-Pointer +3';
+    el.className = 'shot-banner shot-3';
+  }
+}
+function showScorePop(x, y, text, hasBonus){
+  var el = document.createElement('div');
+  el.className = 'score-pop';
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  el.style.color = hasBonus ? '#ffd23f' : '#4ecca3';
+  document.getElementById('game-screen').appendChild(el);
+  setTimeout(function(){ el.remove(); }, 900);
+}
+function showComboFlash(c){
+  var el = document.createElement('div');
+  el.className = 'combo-flash';
+  el.textContent = c + ' COMBO!';
+  el.style.color = c >= 5 ? '#ff6b35' : '#ffd23f';
+  document.getElementById('game-screen').appendChild(el);
+  setTimeout(function(){ el.remove(); }, 700);
+}
+
+// ============================================================
+//  GAME FLOW
+// ============================================================
+function startGame(){
+  state = 'playing';
+  switchScreen('game-screen');
+  setTimeout(function(){
+    initCanvas();
+    initGame();
+    window.addEventListener('resize', resize);
+
+    timerId = setInterval(function(){
+      timeLeft--;
+      document.getElementById('hud-timer').textContent = timeLeft;
+      if(timeLeft <= 5){
+        document.getElementById('hud-timer-wrap').classList.add('danger');
+        if(timeLeft > 0) sndTick();
+      }
+      if(timeLeft <= 0){ endGame(); }
+    }, 1000);
+
+    rafId = requestAnimationFrame(loop);
+  }, 350);
+}
+
+function endGame(){
+  state = 'gameover';
+  aiming = false;
+  clearInterval(timerId);
+  cancelAnimationFrame(rafId);
+  window.removeEventListener('resize', resize);
+  saveScore();
+  showResults();
+  switchScreen('gameover-screen');
+}
+
+function loop(){
+  update();
+  render();
+  rafId = requestAnimationFrame(loop);
+}
+
+// ============================================================
+//  RESULTS & LEADERBOARD
+// ============================================================
+function showResults(){
+  document.getElementById('result-diff').textContent = DIFF[difficulty].label + ' Mode';
+  document.getElementById('result-score').textContent = score;
+  document.getElementById('result-shots').textContent = shots;
+  document.getElementById('result-hits').textContent = hits;
+  document.getElementById('result-acc').textContent = shots > 0 ? Math.round(hits/shots*100) + '%' : '0%';
+  document.getElementById('result-maxcombo').textContent = maxCombo;
+  document.getElementById('lb-diff-label').textContent = DIFF[difficulty].label;
+  renderLeaderboard();
+}
+
+function lbKey(){ return 'bball_lb_' + difficulty; }
+
+function saveScore(){
+  var key = lbKey();
+  var lb;
+  try { lb = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){ lb = []; }
+  lb.push({
+    score: score, shots: shots, hits: hits, maxCombo: maxCombo,
+    date: new Date().toLocaleDateString('en-US',{month:'2-digit',day:'2-digit'})
+  });
+  lb.sort(function(a,b){ return b.score - a.score; });
+  lb = lb.slice(0, 10);
+  try { localStorage.setItem(key, JSON.stringify(lb)); } catch(e){}
+}
+
+function renderLeaderboard(){
+  var lb;
+  try { lb = JSON.parse(localStorage.getItem(lbKey()) || '[]'); } catch(e){ lb = []; }
+  var el = document.getElementById('lb-list');
+  if(lb.length === 0){
+    el.innerHTML = '<div class="lb-empty">No records yet. Be the first!</div>';
+    return;
+  }
+  var html = '';
+  for(var i=0; i<lb.length; i++){
+    var it = lb[i];
+    html += '<div class="lb-item">'
+      + '<span class="lb-rank">' + (i+1) + '</span>'
+      + '<span class="lb-score">' + it.score + 'pts</span>'
+      + '<span class="lb-detail">' + it.hits + '/' + it.shots + ' · ' + it.maxCombo + ' combo · ' + it.date + '</span>'
+      + '</div>';
+  }
+  el.innerHTML = html;
+}
+
+// ============================================================
+//  SCREEN SWITCH
+// ============================================================
+function switchScreen(id){
+  var screens = document.querySelectorAll('.screen');
+  for(var i=0; i<screens.length; i++){
+    screens[i].classList.add('hidden');
+  }
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// ============================================================
+//  EVENT LISTENERS
+// ============================================================
+
+// Difficulty buttons
+document.querySelectorAll('.diff-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.diff-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    difficulty = btn.dataset.diff;
+  });
+});
+
+// Start / Again / Back buttons
+document.getElementById('btn-start').addEventListener('click', function(){
+  initAudio();
+  startGame();
+});
+document.getElementById('btn-again').addEventListener('click', startGame);
+document.getElementById('btn-back').addEventListener('click', function(){
+  state = 'menu';
+  switchScreen('menu-screen');
+});
+
+// ============================================================
+//  SHOOT BUTTON — Drag-to-Aim  (touch + mouse)
+// ============================================================
+var shootBtn = document.getElementById('btn-shoot');
+var btnZone  = document.getElementById('btn-zone');
+
+// --- Touch ---
+shootBtn.addEventListener('touchstart', function(e){
+  e.preventDefault();
+  if(ball.active || state !== 'playing') return;
+  startAim(e, e.changedTouches[0]);
+}, { passive: false });
+
+// Listen for touchmove/touchend on the whole zone (finger may wander)
+btnZone.addEventListener('touchmove', function(e){
+  e.preventDefault();
+  if(!aiming) return;
+  // find the tracked touch
+  for(var i=0; i<e.changedTouches.length; i++){
+    if(e.changedTouches[i].identifier === aimTouchId){
+      moveAim(e, e.changedTouches[i]);
+      return;
+    }
+  }
+}, { passive: false });
+
+btnZone.addEventListener('touchend', function(e){
+  e.preventDefault();
+  if(!aiming) return;
+  for(var i=0; i<e.changedTouches.length; i++){
+    if(e.changedTouches[i].identifier === aimTouchId){
+      endAim(e, e.changedTouches[i]);
+      return;
+    }
+  }
+  // Tracked finger not found — cancel
+  aiming = false;
+  aimTouchId = null;
+  document.getElementById('aim-dot').classList.remove('visible');
+  document.getElementById('aim-hint').classList.remove('visible');
+}, { passive: false });
+
+btnZone.addEventListener('touchcancel', function(e){
+  aiming = false;
+  aimTouchId = null;
+  document.getElementById('aim-dot').classList.remove('visible');
+  document.getElementById('aim-hint').classList.remove('visible');
+});
+
+// --- Mouse ---
+shootBtn.addEventListener('mousedown', function(e){
+  e.preventDefault();
+  if(ball.active || state !== 'playing') return;
+  startAim(e, null);
+});
+
+document.addEventListener('mousemove', function(e){
+  if(!aiming || aimTouchId !== 'mouse') return;
+  moveAim(e, null);
+});
+
+document.addEventListener('mouseup', function(e){
+  if(!aiming || aimTouchId !== 'mouse') return;
+  endAim(e, null);
+});
+
+// ============================================================
+//  KEYBOARD — Space = shoot straight up (aimAngle = 0)
+// ============================================================
+document.addEventListener('keydown', function(e){
+  if(e.code === 'Space' && state === 'playing'){
+    e.preventDefault();
+    if(!ball.active && !aiming){
+      aimAngle = 0;
+      shoot();
+      document.getElementById('btn-shoot').disabled = true;
+    }
+  }
+});
+
+// Prevent touch scroll/zoom
+document.addEventListener('touchmove', function(e){ e.preventDefault(); }, { passive:false });
+document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
+
+})();
+</script>
+</body>
+</html>
