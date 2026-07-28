@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import GameModal from './GameModal.jsx'
+
 const basketball = {
   icon: '🏀',
   title: '投篮大挑战',
@@ -34,6 +37,7 @@ const games = [
 ]
 
 export default function GameZone() {
+  const [gameOpen, setGameOpen] = useState(false)
   return (
     <section className="zone zone--alt" id="games">
       <div className="zone__head">
@@ -41,7 +45,7 @@ export default function GameZone() {
         <h2 className="zone__title">双人小游戏</h2>
         <p className="zone__sub">放下手机里的其他人，只和 ta 玩一会儿。</p>
       </div>
-      <a className="card card--ball card--feature" href={basketball.href}>
+      <a className="card card--ball card--feature" href={basketball.href} onClick={(e) => { e.preventDefault(); setGameOpen(true); }}>
         <span className="card__icon" aria-hidden="true">{basketball.icon}</span>
         <div className="card__body">
           <h3 className="card__title">{basketball.title}</h3>
@@ -61,6 +65,7 @@ export default function GameZone() {
           </a>
         ))}
       </div>
+      {gameOpen && <GameModal onClose={() => setGameOpen(false)} />}
     </section>
   )
 }
