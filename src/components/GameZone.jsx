@@ -1,3 +1,11 @@
+const basketball = {
+  icon: '🏀',
+  title: '投篮大挑战',
+  desc: '考验手速与反应力的篮球小游戏，看你能连进几个球！和 ta 轮流刷分，谁高谁洗碗。',
+  tag: '篮球',
+  href: '/game.html',
+}
+
 const games = [
   {
     icon: '🎨',
@@ -33,6 +41,15 @@ export default function GameZone() {
         <h2 className="zone__title">双人小游戏</h2>
         <p className="zone__sub">放下手机里的其他人，只和 ta 玩一会儿。</p>
       </div>
+      <a className="card card--ball card--feature" href={basketball.href}>
+        <span className="card__icon" aria-hidden="true">{basketball.icon}</span>
+        <div className="card__body">
+          <h3 className="card__title">{basketball.title}</h3>
+          <p className="card__desc">{basketball.desc}</p>
+        </div>
+        <span className="card__cta">开始挑战 →</span>
+      </a>
+
       <div className="cards">
         {games.map((g) => (
           <a className="card" href="#games" key={g.title}>
