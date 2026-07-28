@@ -459,3 +459,62 @@ ul { list-style: none; }
   .card--feature { flex-direction: column; align-items: flex-start; text-align: left; }
   .card--feature .card__cta { align-self: stretch; text-align: center; }
 }
+
+/* ===== 篮球游戏弹窗（在 #games 内联游玩，不跳离首页） ===== */
+.game-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(74, 53, 64, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: gameFade 0.2s ease;
+}
+@keyframes gameFade { from { opacity: 0; } to { opacity: 1; } }
+.game-modal {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  height: min(84vh, 780px);
+  background: #0d1117;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.6);
+  animation: gamePop 0.25s ease;
+}
+@keyframes gamePop {
+  from { transform: translateY(16px) scale(0.97); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.game-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.game-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+.game-close:hover { background: rgba(255, 255, 255, 0.32); }
+@media (max-width: 640px) {
+  .game-modal { height: 88vh; max-width: 100%; }
+}
