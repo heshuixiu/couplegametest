@@ -25,14 +25,14 @@ const tests = [
   },
   {
     icon: '🎁',
-    title: '专属测评兑换',
-    desc: '输入兑换码，解锁你们的专属测评与隐藏彩蛋。',
-    tag: '福利',
-    href: '#redeem',
+    title: '专属测评',
+    desc: '点开直接开测，看看你们到底有多合拍！',
+    tag: '直测',
+    action: 'quiz',
   },
 ]
 
-export default function TestZone() {
+export default function TestZone({ onOpenQuiz }) {
   return (
     <section className="zone" id="tests">
       <div className="zone__head">
@@ -41,15 +41,30 @@ export default function TestZone() {
         <p className="zone__sub">好玩不无聊，测完更懂 ta。</p>
       </div>
       <div className="cards">
-        {tests.map((t) => (
-          <a className="card" href={t.href || '#tests'} key={t.title}>
-            {t.tag && <span className="card__tag">{t.tag}</span>}
-            <span className="card__icon" aria-hidden="true">{t.icon}</span>
-            <h3 className="card__title">{t.title}</h3>
-            <p className="card__desc">{t.desc}</p>
-            <span className="card__link">去评测 →</span>
-          </a>
-        ))}
+        {tests.map((t) => {
+          const isQuiz = t.action === 'quiz'
+          return (
+            <a
+              className="card"
+              href={isQuiz ? '#tests' : (t.href || '#tests')}
+              key={t.title}
+              onClick={
+                isQuiz
+                  ? (e) => {
+                      e.preventDefault()
+                      onOpenQuiz && onOpenQuiz()
+                    }
+                  : undefined
+              }
+            >
+              {t.tag && <span className="card__tag">{t.tag}</span>}
+              <span className="card__icon" aria-hidden="true">{t.icon}</span>
+              <h3 className="card__title">{t.title}</h3>
+              <p className="card__desc">{t.desc}</p>
+              <span className="card__link">{isQuiz ? '立即开测 →' : '去评测 →'}</span>
+            </a>
+          )
+        })}
       </div>
     </section>
   )
