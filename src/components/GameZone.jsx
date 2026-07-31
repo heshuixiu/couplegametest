@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import GameModal from './GameModal.jsx'
 import ChemistryModal from './ChemistryModal.jsx'
 
@@ -14,7 +14,7 @@ const games = [
   {
     icon: '👀',
     title: '默契大考验',
-    desc: '同屏轮答同一份题，看谁更懂对方的心思。',
+    desc: '答完生成专属链接，发给 TA 在各自手机上比默契。',
     tag: '热门',
     action: 'chem',
   },
@@ -38,9 +38,29 @@ const games = [
   },
 ]
 
+function readInvite() {
+  try {
+    const b64 = new URLSearchParams(window.location.search).get('chem')
+    if (!b64) return null
+    const obj = JSON.parse(decodeURIComponent(atob(b64)))
+    if (obj && obj.q && obj.q.length) return obj
+  } catch (e) {}
+  return null
+}
+
 export default function GameZone() {
   const [gameOpen, setGameOpen] = useState(false)
   const [chemOpen, setChemOpen] = useState(false)
+  const [chemInvite, setChemInvite] = useState(null)
+
+  useEffect(() => {
+    const inv = readInvite()
+    if (inv) {
+      setChemInvite(inv)
+      setChemOpen(true)
+    }
+  }, [])
+
   return (
     <section className="zone zone--alt" id="games">
       <div className="zone__head">
@@ -77,7 +97,7 @@ export default function GameZone() {
         ))}
       </div>
       {gameOpen && <GameModal onClose={() => setGameOpen(false)} />}
-      {chemOpen && <ChemistryModal onClose={() => setChemOpen(false)} />}
+      {chemOpen && <ChemistryModal onClose={() => setChemOpen(false)} invite={chemInvite} />}
     </section>
   )
 }
