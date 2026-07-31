@@ -10,6 +10,7 @@ const tests = [
     title: '恋爱类型评测',
     desc: '你是哪种恋人？找到最舒服的相处方式与表达爱的方式。',
     tag: '推荐',
+    action: 'lovetype',
   },
   {
     icon: '🌡️',
@@ -32,7 +33,7 @@ const tests = [
   },
 ]
 
-export default function TestZone({ onOpenQuiz }) {
+export default function TestZone({ onOpenQuiz, onOpenLoveType }) {
   return (
     <section className="zone" id="tests">
       <div className="zone__head">
@@ -43,25 +44,25 @@ export default function TestZone({ onOpenQuiz }) {
       <div className="cards">
         {tests.map((t) => {
           const isQuiz = t.action === 'quiz'
+          const isLove = t.action === 'lovetype'
           return (
             <a
               className="card"
-              href={isQuiz ? '#tests' : (t.href || '#tests')}
+              href={(isQuiz || isLove) ? '#tests' : (t.href || '#tests')}
               key={t.title}
               onClick={
                 isQuiz
-                  ? (e) => {
-                      e.preventDefault()
-                      onOpenQuiz && onOpenQuiz()
-                    }
-                  : undefined
+                  ? (e) => { e.preventDefault(); onOpenQuiz && onOpenQuiz() }
+                  : isLove
+                    ? (e) => { e.preventDefault(); onOpenLoveType && onOpenLoveType() }
+                    : undefined
               }
             >
               {t.tag && <span className="card__tag">{t.tag}</span>}
               <span className="card__icon" aria-hidden="true">{t.icon}</span>
               <h3 className="card__title">{t.title}</h3>
               <p className="card__desc">{t.desc}</p>
-              <span className="card__link">{isQuiz ? '立即开测 →' : '去评测 →'}</span>
+              <span className="card__link">{isQuiz || isLove ? '立即开测 →' : '去评测 →'}</span>
             </a>
           )
         })}
