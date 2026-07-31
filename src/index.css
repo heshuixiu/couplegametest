@@ -671,3 +671,20 @@ ul { list-style: none; }
   border: 1.5px solid rgba(255, 107, 157, 0.18);
   background: #fff;
 }
+
+/* ---- 默契大考验：分享链接 / 加入页 补充 ---- */
+.chem__emoji{font-size:44px;text-align:center;line-height:1;margin-bottom:6px}
+.chem__linkbox{display:flex;flex-direction:column;gap:10px;margin:10px 0 4px}
+.chem__link{
+  width:100%;box-sizing:border-box;
+  padding:12px 14px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  color:#fff;font-size:13px;line-height:1.4;
+  word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.chem__actions--col{flex-direction:column;align-items:stretch;margin-top:14px}
+.chem__actions--col .chem__btn{width:100%}
+.chem__input--center{
+  text-align:center;font-size:17px;margin:14px auto 6px;max-width:240px;
+}
