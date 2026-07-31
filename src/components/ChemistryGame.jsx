@@ -18,6 +18,9 @@ const TIERS = [
   { min: 0, name: '完全不熟', emoji: '😅', desc: '这结果说明你们还得再多多了解彼此呀。' },
 ]
 
+const ALL = Object.values(QUESTION_BANK).flat()
+const BY_ID = ALL.reduce((m, q) => { m[q.id] = q; return m }, {})
+
 function shuffle(arr) {
   const a = arr.slice()
   for (let i = a.length - 1; i > 0; i--) {
@@ -29,26 +32,38 @@ function shuffle(arr) {
 
 function pickQuestions(catKey) {
   const pool = catKey === 'random'
-    ? Object.values(QUESTION_BANK).flat()
+    ? ALL
     : (QUESTION_BANK[catKey] || [])
   return shuffle(pool).slice(0, 10)
 }
 
-export default function ChemistryGame({ onClose }) {
-  const [phase, setPhase] = useState('setup') // setup | A | handoff | B | reveal
-  const [cat, setCat] = useState('random')
-  const [p1, setP1] = useState('玩家1')
-  const [p2, setP2] = useState('玩家2')
-  const [questions, setQuestions] = useState([])
-  const [idx, setIdx] = useState(0)
-  const [ansA, setAnsA] = useState([])
+function encodeInvite(obj) {
+  return btoa(encodeURIComponent(JSON.stringify(obj)))
+}
+function decodeInvite(b64) {
+  try { return JSON.parse(decodeURIComponent(atob(b64))) } catch (e) { return null }
+}
+
+export default function ChemistryGame({ onClose, invite }) {
+  const hasInvite = !!(invite && invite.q && invite.q.length)
+  const [phase, setPhase] = useState(hasInvite ? 'join' : 'setup') // setup|A|link|join|B|reveal
+  const [cat, setCat] = useState(hasInvite ? invite.c : 'random')
+  const [p1, setP1] = useState(hasInvite ? (invite.a || '玩家1') : '玩家1')
+  const [p2, setP2] = useState('')
+  const [questions, setQuestions] = useState(hasInvite ? invite.q.map(id => BY_ID[id]).filter(Boolean) : [])
+  const [ansA, setAnsA] = useState(hasInvite ? (invite.r || '').split('').filter(x => x === 'a' || x === 'b') : [])
   const [ansB, setAnsB] = useState([])
+  const [idx, setIdx] = useState(0)
   const [revealed, setRevealed] = useState(0)
   const [copied, setCopied] = useState(false)
+  const [shareLink, setShareLink] = useState('')
+  const [linkCopied, setLinkCopied] = useState(false)
+  const [sameDevice, setSameDevice] = useState(false)
 
   function start() {
     setQuestions(pickQuestions(cat))
-    setAnsA([]); setAnsB([]); setIdx(0); setRevealed(0); setCopied(false)
+    setAnsA([]); setAnsB([]); setIdx(0); setRevealed(0)
+    setCopied(false); setLinkCopied(false); setSameDevice(false)
     setPhase('A')
   }
 
@@ -56,7 +71,7 @@ export default function ChemistryGame({ onClose }) {
     if (who === 'A') {
       const next = [...ansA, value]
       setAnsA(next)
-      if (next.length >= questions.length) setPhase('handoff')
+      if (next.length >= questions.length) makeLink(next)
       else setIdx(next.length)
     } else {
       const next = [...ansB, value]
@@ -64,6 +79,26 @@ export default function ChemistryGame({ onClose }) {
       if (next.length >= questions.length) setPhase('reveal')
       else setIdx(next.length)
     }
+  }
+
+  function makeLink(aAnswers) {
+    const payload = { c: cat, q: questions.map(x => x.id), a: p1.trim() || '玩家1', r: aAnswers.join('') }
+    const b64 = encodeInvite(payload)
+    const url = window.location.origin + window.location.pathname + '?chem=' + b64
+    setShareLink(url)
+    setPhase('link')
+  }
+
+  function goJoin() {
+    setSameDevice(true)
+    setP2('')
+    setAnsB([]); setIdx(0); setRevealed(0)
+    setPhase('join')
+  }
+
+  function joinStart() {
+    setAnsB([]); setIdx(0); setRevealed(0)
+    setPhase('B')
   }
 
   useEffect(() => {
@@ -83,12 +118,34 @@ export default function ChemistryGame({ onClose }) {
   const n1 = p1.trim() || '玩家1'
   const n2 = p2.trim() || '玩家2'
 
+  function copyResult() {
+    const share = '【默契大考验】' + n1 + ' VS ' + n2 + '\n默契度 ' + score + '%（' + matchCount + '/' + total + ' 题一致）\n' + tier.emoji + ' ' + tier.name + '：' + tier.desc
+    const ta = document.createElement('textarea')
+    ta.value = share
+    document.body.appendChild(ta); ta.select()
+    try { document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch (e) {}
+    document.body.removeChild(ta)
+  }
+
+  function copyLink() {
+    const done = () => { setLinkCopied(true); setTimeout(() => setLinkCopied(false), 1500) }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareLink).then(done).catch(() => fallbackCopy(shareLink, done))
+    } else fallbackCopy(shareLink, done)
+  }
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea')
+    ta.value = text; document.body.appendChild(ta); ta.select()
+    try { document.execCommand('copy'); done() } catch (e) {}
+    document.body.removeChild(ta)
+  }
+
   if (phase === 'setup') {
     return (
       <div className="chem">
         <div className="chem__head">
           <h2 className="chem__title">默契大考验</h2>
-          <p className="chem__sub">两人各答同一份题，看谁更懂对方。</p>
+          <p className="chem__sub">答完生成专属链接，发给 TA 在各自手机上比默契。</p>
         </div>
         <div className="chem__field">
           <label>选择题库</label>
@@ -101,39 +158,51 @@ export default function ChemistryGame({ onClose }) {
           </div>
         </div>
         <div className="chem__names">
-          <input className="chem__input" value={p1} maxLength={8} onChange={e => setP1(e.target.value)} placeholder="玩家1昵称" />
-          <span className="chem__vs">VS</span>
-          <input className="chem__input" value={p2} maxLength={8} onChange={e => setP2(e.target.value)} placeholder="玩家2昵称" />
+          <input className="chem__input" value={p1} maxLength={8} onChange={e => setP1(e.target.value)} placeholder="你的昵称" />
         </div>
         <button className="chem__btn" type="button" onClick={start}>开始测试 · 随机 10 题</button>
-        <p className="chem__tip">同屏轮答：先一人答完，再把设备交给另一人。</p>
+        <p className="chem__tip">你先答完 10 题，再把链接甩给 TA。</p>
       </div>
     )
   }
 
-  if (phase === 'handoff') {
+  if (phase === 'link') {
+    return (
+      <div className="chem">
+        <div className="chem__head">
+          <div className="chem__emoji">🎉</div>
+          <h2 className="chem__title">你的 10 题答完啦！</h2>
+          <p className="chem__sub">把下面这条链接发给 TA，TA 在自己手机上答完，就能揭晓你们的默契度。</p>
+        </div>
+        <div className="chem__linkbox">
+          <input className="chem__link" readOnly value={shareLink} onFocus={e => e.target.select()} />
+          <button className="chem__btn" type="button" onClick={copyLink}>{linkCopied ? '已复制 ✓' : '📋 复制链接发给 TA'}</button>
+        </div>
+        <p className="chem__tip">复制后发到微信 / QQ，TA 点开就能直接作答。</p>
+        <div className="chem__actions chem__actions--col">
+          <button className="chem__btn chem__btn--ghost" type="button" onClick={goJoin}>📱 同屏轮答（把手机交给 TA）</button>
+          <button className="chem__btn chem__btn--soft" type="button" onClick={() => setPhase('setup')}>重新设置</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'join') {
+    const isRemote = hasInvite && !sameDevice
     return (
       <div className="chem chem--center">
         <div className="chem__handoff">
-          <div className="chem__emoji">🤫</div>
-          <h2 className="chem__title">请把设备交给 {n2}</h2>
-          <p className="chem__sub">确认 {n2} 没偷看 {n1} 的答案，再继续。</p>
-          <button className="chem__btn" type="button" onClick={() => { setIdx(0); setPhase('B') }}>我准备好了 →</button>
+          <div className="chem__emoji">{isRemote ? '👀' : '🤝'}</div>
+          <h2 className="chem__title">{isRemote ? (n1 + ' 邀请你来测默契') : '轮到你了'}</h2>
+          <p className="chem__sub">{isRemote ? ('你将回答和 ' + n1 + ' 完全相同的 10 道题。') : (n1 + ' 已经答完，现在轮到你。')}</p>
+          <input className="chem__input chem__input--center" value={p2} maxLength={8} onChange={e => setP2(e.target.value)} placeholder="输入你的昵称" />
+          <button className="chem__btn" type="button" onClick={joinStart}>开始作答 →</button>
         </div>
       </div>
     )
   }
 
   if (phase === 'reveal') {
-    const share = '【默契大考验】' + n1 + ' VS ' + n2 + '\n默契度 ' + score + '%（' + matchCount + '/' + total + ' 题一致）\n' + tier.emoji + ' ' + tier.name + '：' + tier.desc
-    function copy() {
-      const ta = document.createElement('textarea')
-      ta.value = share
-      document.body.appendChild(ta)
-      ta.select()
-      try { document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch (e) {}
-      document.body.removeChild(ta)
-    }
     return (
       <div className="chem">
         <div className="chem__result">
@@ -165,7 +234,7 @@ export default function ChemistryGame({ onClose }) {
         <div className="chem__actions">
           <button className="chem__btn chem__btn--ghost" type="button" onClick={() => setPhase('setup')}>重新设置</button>
           <button className="chem__btn" type="button" onClick={start}>换一批再测</button>
-          <button className="chem__btn chem__btn--soft" type="button" onClick={copy}>{copied ? '已复制 ✓' : '复制结果'}</button>
+          <button className="chem__btn chem__btn--soft" type="button" onClick={copyResult}>{copied ? '已复制 ✓' : '复制结果'}</button>
         </div>
       </div>
     )
